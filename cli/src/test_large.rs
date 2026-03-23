@@ -2,7 +2,7 @@
 mod tests {
     use crate::{render::render_messages_list, test_utils::buffer_to_string, theme::Theme};
     use ratatui::{backend::TestBackend, Terminal};
-    use shared::MessagePreview;
+    use shared::{MessageKind, MessagePreview};
 
     #[test]
     fn test_large_message_truncates_in_preview() {
@@ -10,8 +10,10 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let messages = vec![MessagePreview {
+            kind: MessageKind::AssistantMessage,
             participant_label: "Assistant".into(),
             content: "lorem ipsum dolor sit amet ".repeat(40),
+            depth: 0,
             is_focused: true,
             is_expanded: false,
             relative_time: Some("1d ago".into()),
@@ -21,7 +23,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_messages_list(f, f.size(), &messages, &theme);
+                render_messages_list(f, f.size(), &messages, &theme, None, true);
             })
             .unwrap();
 

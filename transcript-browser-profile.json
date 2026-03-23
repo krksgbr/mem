@@ -1,0 +1,473 @@
+{
+  "status": "completed",
+  "error": null,
+  "started_at_ms": 1776183174869,
+  "finished_at_ms": 1776183465815,
+  "frames": 16,
+  "key_frames": 16,
+  "width": 87,
+  "height": 21,
+  "log": [
+    {
+      "seq": 0,
+      "timestamp_ms": 1776183174869,
+      "phase": "startup",
+      "detail": "starting interactive run"
+    },
+    {
+      "seq": 1,
+      "timestamp_ms": 1776183174875,
+      "phase": "startup",
+      "detail": "ensured default index"
+    },
+    {
+      "seq": 2,
+      "timestamp_ms": 1776183174917,
+      "phase": "startup",
+      "detail": "entered terminal session at 87x21 with 37 workspaces"
+    },
+    {
+      "seq": 3,
+      "timestamp_ms": 1776183175921,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 4,
+      "timestamp_ms": 1776183176502,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 5,
+      "timestamp_ms": 1776183177140,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 6,
+      "timestamp_ms": 1776183177839,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 7,
+      "timestamp_ms": 1776183178131,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 8,
+      "timestamp_ms": 1776183179589,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 9,
+      "timestamp_ms": 1776183181380,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 10,
+      "timestamp_ms": 1776183186241,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 11,
+      "timestamp_ms": 1776183187267,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 12,
+      "timestamp_ms": 1776183187959,
+      "phase": "input",
+      "detail": "applied event MessageUp from key Up"
+    },
+    {
+      "seq": 13,
+      "timestamp_ms": 1776183188651,
+      "phase": "input",
+      "detail": "applied event MessageUp from key Up"
+    },
+    {
+      "seq": 14,
+      "timestamp_ms": 1776183189330,
+      "phase": "input",
+      "detail": "applied event MessageUp from key Up"
+    },
+    {
+      "seq": 15,
+      "timestamp_ms": 1776183190366,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 16,
+      "timestamp_ms": 1776183191043,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 17,
+      "timestamp_ms": 1776183191723,
+      "phase": "input",
+      "detail": "applied event MessageDown from key Down"
+    },
+    {
+      "seq": 18,
+      "timestamp_ms": 1776183196593,
+      "phase": "background_sync",
+      "detail": "applied updated workspace snapshot (37 workspaces)"
+    },
+    {
+      "seq": 19,
+      "timestamp_ms": 1776183465814,
+      "phase": "input",
+      "detail": "quit via key Char('q')"
+    }
+  ],
+  "totals_ms": {
+    "poll_wait": 84.33599799999999,
+    "update": 0.49554000000000004,
+    "hydrate": 0.07558500000000001,
+    "view": 5.587210000000001,
+    "render": 3176.0751259999993,
+    "total": 3266.105499999999
+  },
+  "averages_ms": {
+    "poll_wait": 5.270999874999999,
+    "update": 0.030971250000000002,
+    "hydrate": 0.004724062500000001,
+    "view": 0.34920062500000004,
+    "render": 198.50469537499995,
+    "total": 204.13159374999995
+  },
+  "worst_frame": {
+    "frame": 6,
+    "title": "Messages in 'dump-screen'",
+    "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+    "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+    "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+    "selected_index": 0,
+    "terminal_cells": 1827,
+    "key_code": "Down",
+    "input_outcome": "event",
+    "durations_ms": {
+      "poll_wait": 0.051,
+      "update": 0.028291,
+      "hydrate": 0.002125,
+      "view": 0.618208,
+      "render": 503.967375,
+      "total": 504.64062499999994
+    }
+  },
+  "frames_profiled": [
+    {
+      "frame": 0,
+      "title": "Workspaces",
+      "breadcrumb": "Workspaces",
+      "filter_text": "Filter: All Providers [F to cycle]",
+      "active_id": null,
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.061583,
+        "update": 0.039708,
+        "hydrate": 0.00075,
+        "view": 0.015625,
+        "render": 1.554875,
+        "total": 1.634833
+      }
+    },
+    {
+      "frame": 1,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 4.093833,
+        "update": 0.030459,
+        "hydrate": 0.000917,
+        "view": 0.021959,
+        "render": 0.948292,
+        "total": 5.067125
+      }
+    },
+    {
+      "frame": 2,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 15.032916,
+        "update": 0.033667,
+        "hydrate": 0.000709,
+        "view": 0.028458999999999998,
+        "render": 1.2322920000000002,
+        "total": 16.296167
+      }
+    },
+    {
+      "frame": 3,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 17.115,
+        "update": 0.06025,
+        "hydrate": 0.000833,
+        "view": 0.022208000000000002,
+        "render": 0.9771669999999999,
+        "total": 18.117250000000002
+      }
+    },
+    {
+      "frame": 4,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 17.141333000000003,
+        "update": 0.06966599999999999,
+        "hydrate": 0.000833,
+        "view": 0.026250000000000002,
+        "render": 1.677667,
+        "total": 18.847917
+      }
+    },
+    {
+      "frame": 5,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 1,
+      "terminal_cells": 1827,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 13.467709,
+        "update": 0.034999999999999996,
+        "hydrate": 0.000792,
+        "view": 0.025042,
+        "render": 1.2252090000000002,
+        "total": 14.720625
+      }
+    },
+    {
+      "frame": 6,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.051,
+        "update": 0.028291,
+        "hydrate": 0.002125,
+        "view": 0.618208,
+        "render": 503.967375,
+        "total": 504.64062499999994
+      }
+    },
+    {
+      "frame": 7,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 1,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.045791000000000005,
+        "update": 0.024833,
+        "hydrate": 0.0020829999999999998,
+        "view": 0.532334,
+        "render": 328.271375,
+        "total": 328.85325
+      }
+    },
+    {
+      "frame": 8,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 2,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.043040999999999996,
+        "update": 0.023625,
+        "hydrate": 0.052667000000000005,
+        "view": 0.6571250000000001,
+        "render": 331.754666,
+        "total": 332.50975
+      }
+    },
+    {
+      "frame": 9,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 3,
+      "terminal_cells": 1827,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.041582999999999995,
+        "update": 0.022583,
+        "hydrate": 0.0022500000000000003,
+        "view": 0.6922919999999999,
+        "render": 338.766333,
+        "total": 339.504333
+      }
+    },
+    {
+      "frame": 10,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 2,
+      "terminal_cells": 1827,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.044125000000000004,
+        "update": 0.023916,
+        "hydrate": 0.002125,
+        "view": 0.523,
+        "render": 343.23362499999996,
+        "total": 343.804709
+      }
+    },
+    {
+      "frame": 11,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 1,
+      "terminal_cells": 1827,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.0485,
+        "update": 0.025625,
+        "hydrate": 0.002,
+        "view": 0.54825,
+        "render": 329.152667,
+        "total": 329.753375
+      }
+    },
+    {
+      "frame": 12,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.048084,
+        "update": 0.025542,
+        "hydrate": 0.0022919999999999998,
+        "view": 0.571416,
+        "render": 332.97475,
+        "total": 333.598666
+      }
+    },
+    {
+      "frame": 13,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 1,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.05375,
+        "update": 0.028249999999999997,
+        "hydrate": 0.002542,
+        "view": 0.597167,
+        "render": 328.841625,
+        "total": 329.49699999999996
+      }
+    },
+    {
+      "frame": 14,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 2,
+      "terminal_cells": 1827,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.043875000000000004,
+        "update": 0.024125,
+        "hydrate": 0.001917,
+        "view": 0.6904170000000001,
+        "render": 329.966833,
+        "total": 330.70475
+      }
+    },
+    {
+      "frame": 15,
+      "title": "Workspaces",
+      "breadcrumb": "Workspaces",
+      "filter_text": "Filter: All Providers [F to cycle]",
+      "active_id": null,
+      "selected_index": 0,
+      "terminal_cells": 1827,
+      "key_code": "q",
+      "input_outcome": "quit",
+      "durations_ms": {
+        "poll_wait": 17.003875,
+        "update": 0.0,
+        "hydrate": 0.00075,
+        "view": 0.017458,
+        "render": 1.530375,
+        "total": 18.555125
+      }
+    }
+  ]
+}

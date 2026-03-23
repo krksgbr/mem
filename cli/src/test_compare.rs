@@ -6,7 +6,7 @@ mod tests {
         widgets::{ListState, TableState},
         Terminal,
     };
-    use shared::{ConversationPreview, MessagePreview, ViewContent, ViewModel};
+    use shared::{ConversationPreview, MessageKind, MessagePreview, ViewContent, ViewModel};
     use std::fs;
 
     fn load_fixture_messages() -> Vec<Vec<String>> {
@@ -28,8 +28,14 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(idx, msg)| MessagePreview {
+                kind: if idx % 2 == 0 {
+                    MessageKind::UserMessage
+                } else {
+                    MessageKind::AssistantMessage
+                },
                 participant_label: msg[0].clone(),
                 content: msg[1].clone(),
+                depth: 0,
                 is_focused: idx == 0,
                 is_expanded: false,
                 relative_time: Some("1d ago".into()),

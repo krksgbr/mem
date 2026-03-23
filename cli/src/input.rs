@@ -1,68 +1,171 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use crossterm::event::KeyCode;
-use crux_core::Core;
-use shared::{Event, TranscriptBrowser, ViewModel};
+use shared::{Event, ViewContent, ViewModel};
 
 pub enum InputOutcome {
     Continue,
+    Event(Event),
+    CopyActiveId,
     Quit,
 }
 
-pub fn handle_key_code(
-    core: &Core<TranscriptBrowser>,
-    view_model: &ViewModel,
-    key_code: KeyCode,
-) -> Result<InputOutcome> {
+pub fn handle_key_code(view_model: &ViewModel, key_code: KeyCode) -> Result<InputOutcome> {
+    let on_messages_screen = matches!(view_model.content, ViewContent::MessagesList(_));
+
     match key_code {
         KeyCode::Char('q') | KeyCode::Char('Q') => Ok(InputOutcome::Quit),
-        KeyCode::Up | KeyCode::Char('k') => {
-            core.process_event(Event::Up);
-            Ok(InputOutcome::Continue)
+        KeyCode::Up => Ok(InputOutcome::Event(if on_messages_screen {
+            Event::MessageUp
+        } else {
+            Event::Up
+        })),
+        KeyCode::Down => Ok(InputOutcome::Event(if on_messages_screen {
+            Event::MessageDown
+        } else {
+            Event::Down
+        })),
+        KeyCode::Char('k') => Ok(InputOutcome::Event(Event::Up)),
+        KeyCode::Char('j') => Ok(InputOutcome::Event(Event::Down)),
+        KeyCode::Enter => Ok(InputOutcome::Event(Event::Select)),
+        KeyCode::Right | KeyCode::Char('l') => {
+            if selected_row_is_expandable(view_model) {
+                Ok(InputOutcome::Event(Event::ToggleMessage))
+            } else {
+                Ok(InputOutcome::Event(Event::Select))
+            }
         }
-        KeyCode::Down | KeyCode::Char('j') => {
-            core.process_event(Event::Down);
-            Ok(InputOutcome::Continue)
+        KeyCode::Esc | KeyCode::Backspace => Ok(InputOutcome::Event(Event::Back)),
+        KeyCode::Left | KeyCode::Char('h') => {
+            if selected_row_is_expanded(view_model) {
+                Ok(InputOutcome::Event(Event::ToggleMessage))
+            } else {
+                Ok(InputOutcome::Event(Event::Back))
+            }
         }
-        KeyCode::Char('K') => {
-            core.process_event(Event::MessageUp);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Char('J') => {
-            core.process_event(Event::MessageDown);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Enter | KeyCode::Right | KeyCode::Char('l') => {
-            core.process_event(Event::Select);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Esc | KeyCode::Backspace | KeyCode::Left | KeyCode::Char('h') => {
-            core.process_event(Event::Back);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Char('f') | KeyCode::Char('F') => {
-            core.process_event(Event::CycleFilter);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Char('e') | KeyCode::Char('E') => {
-            core.process_event(Event::ToggleMessage);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Char('~') => {
-            core.process_event(Event::ToggleLayout);
-            Ok(InputOutcome::Continue)
-        }
-        KeyCode::Char('Y') | KeyCode::Char('y') => {
-            let id = view_model
-                .active_id
-                .as_ref()
-                .context("copy requested but no active conversation is selected")?;
-            let mut clipboard =
-                arboard::Clipboard::new().context("failed to initialize clipboard")?;
-            clipboard
-                .set_text(id.clone())
-                .context("failed to copy conversation id to clipboard")?;
-            Ok(InputOutcome::Continue)
-        }
+        KeyCode::Char('f') | KeyCode::Char('F') => Ok(InputOutcome::Event(Event::CycleFilter)),
+        KeyCode::Char('e') | KeyCode::Char('E') => Ok(InputOutcome::Event(Event::ToggleMessage)),
+        KeyCode::Char('~') => Ok(InputOutcome::Event(Event::ToggleLayout)),
+        KeyCode::Char('Y') | KeyCode::Char('y') => Ok(InputOutcome::CopyActiveId),
         _ => Ok(InputOutcome::Continue),
+    }
+}
+
+fn selected_row_is_expandable(view_model: &ViewModel) -> bool {
+    let ViewContent::Table { rows, .. } = &view_model.content else {
+        return false;
+    };
+
+    rows.get(view_model.selected_index)
+        .and_then(|row| row.first())
+        .map(|cell| cell.starts_with('▸') || cell.starts_with('▾'))
+        .unwrap_or(false)
+}
+
+fn selected_row_is_expanded(view_model: &ViewModel) -> bool {
+    let ViewContent::Table { rows, .. } = &view_model.content else {
+        return false;
+    };
+
+    rows.get(view_model.selected_index)
+        .and_then(|row| row.first())
+        .map(|cell| cell.starts_with('▾'))
+        .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn messages_view() -> ViewModel {
+        ViewModel {
+            title: "Messages".into(),
+            breadcrumb: "Workspaces > test > convo".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::MessagesList(vec![]),
+            selected_index: 0,
+            filter_text: "Filter: All".into(),
+        }
+    }
+
+    fn table_view(selected_index: usize, first_cell: &str) -> ViewModel {
+        ViewModel {
+            title: "Conversations".into(),
+            breadcrumb: "Workspaces > test".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::Table {
+                headers: vec![
+                    "Conversation".into(),
+                    "Provider".into(),
+                    "First Active".into(),
+                    "Last Active".into(),
+                ],
+                rows: vec![vec![
+                    first_cell.into(),
+                    "Codex".into(),
+                    "1h".into(),
+                    "now".into(),
+                ]],
+            },
+            selected_index,
+            filter_text: "Filter: Codex".into(),
+        }
+    }
+
+    #[test]
+    fn selected_row_is_expandable_for_parent_rows() {
+        assert!(selected_row_is_expandable(&table_view(0, "▸ dump-screen")));
+        assert!(selected_row_is_expandable(&table_view(0, "▾ dump-screen")));
+    }
+
+    #[test]
+    fn selected_row_is_not_expandable_for_plain_rows() {
+        assert!(!selected_row_is_expandable(&table_view(
+            0,
+            "  plain conversation"
+        )));
+        assert!(!selected_row_is_expandable(&table_view(
+            0,
+            "  ├─ main session"
+        )));
+    }
+
+    #[test]
+    fn selected_row_is_expanded_for_open_parent_rows() {
+        assert!(selected_row_is_expanded(&table_view(0, "▾ dump-screen")));
+        assert!(!selected_row_is_expanded(&table_view(0, "▸ dump-screen")));
+        assert!(!selected_row_is_expanded(&table_view(
+            0,
+            "  ├─ main session"
+        )));
+    }
+
+    #[test]
+    fn transcript_scroll_uses_only_arrow_keys() {
+        let view = messages_view();
+
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Up).unwrap(),
+            InputOutcome::Event(Event::MessageUp)
+        ));
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Down).unwrap(),
+            InputOutcome::Event(Event::MessageDown)
+        ));
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Char('j')).unwrap(),
+            InputOutcome::Event(Event::Down)
+        ));
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Char('k')).unwrap(),
+            InputOutcome::Event(Event::Up)
+        ));
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Char('J')).unwrap(),
+            InputOutcome::Continue
+        ));
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Char('K')).unwrap(),
+            InputOutcome::Continue
+        ));
     }
 }

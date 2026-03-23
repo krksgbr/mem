@@ -37,6 +37,7 @@ You must exhaustively test state transitions without a UI using `crux_core::test
 
 **Reference:** Look at the `tests` module at the bottom of `shared/src/app.rs` for examples of how to instantiate the `AppTester`, send events, and assert against the resulting `ViewModel`. 
 Run `cargo test -p shared` to verify.
+Run `cargo check` as a cheap whole-workspace sanity check before concluding the change is done.
 
 Also inspect `shared/src/domain.rs` before changing provider support or transcript normalization.
 
@@ -45,14 +46,22 @@ If you need to change how the UI looks in the `cli` crate, **do not run the app 
 
 Instead, use Ratatui's `TestBackend`. This creates a virtual terminal buffer in memory, renders your UI to it, and lets you assert the exact text placement.
 
+For real transcript data without launching the interactive TUI, use the non-interactive dump command:
+
+`cargo run -p cli -- dump-screen --screen <workspaces|conversations|messages> ...`
+
+This path is safe for agents because it renders once and exits. Prefer it when you need to inspect how a real workspace/conversation renders at a specific terminal size.
+
 **Reference:** When writing rendering tests, do not look for code snippets here. Instead, refer to existing test implementations in the `cli` crate (if available) or standard `ratatui::backend::TestBackend` patterns where you inject a mocked `ViewModel`, call the rendering function, and verify output against the buffer.
 Run `cargo test -p cli` to verify.
 
 ### Summary Checklist for Future Agents
-1. **Never** run `cargo run`. 
+1. **Never** run the interactive TUI with bare `cargo run` or `cargo run --bin cli`.
 2. Use `AppTester` to verify state and logic changes.
 3. Use `TestBackend` to verify layout, colors, and text changes.
-4. Run `cargo test` as your source of truth. If the tests pass, the TUI will work.
+4. Use `dump-screen` when you need a non-interactive snapshot of a real screen with real transcript data.
+5. Run `cargo check` to catch non-test build issues and warnings in the normal binary target.
+6. Run `cargo test -p shared` and `cargo test -p cli` as the main verification path. If they pass, the TUI logic and rendering are covered without launching the app.
 
 ## Crux + Ratatui Architectural Rules
 

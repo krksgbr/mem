@@ -1,11 +1,31 @@
 use anyhow::Result;
 use chrono::DateTime;
 use serde_json::Value;
-use shared::{Conversation, Message, Participant, ProviderKind, Workspace};
-use std::fs;
+use shared::{
+    Conversation, ConversationLoadRef, Message, MessageKind, Participant, ProviderKind, Workspace,
+};
+use std::fs::{self, File};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
-pub fn load_workspaces() -> Result<Vec<Workspace>> {
+#[derive(Clone, Copy)]
+enum LoadMode {
+    Full,
+}
+
+struct ParsedConversation {
+    title: Option<String>,
+    preview: Option<String>,
+    created_at: i64,
+    updated_at: i64,
+    messages: Vec<Message>,
+}
+
+pub fn load_workspaces_full() -> Result<Vec<Workspace>> {
+    load_workspaces(LoadMode::Full)
+}
+
+fn load_workspaces(mode: LoadMode) -> Result<Vec<Workspace>> {
     let mut workspaces = Vec::new();
     let home_dir = std::env::var("HOME")?;
     let base_path = PathBuf::from(&home_dir).join(".claude/projects");
@@ -24,7 +44,7 @@ pub fn load_workspaces() -> Result<Vec<Workspace>> {
         }
 
         let dir_name = entry.file_name().to_string_lossy().to_string();
-        if let Some(workspace) = load_workspace(&path, &dir_name, &home_dir, &home_prefix)? {
+        if let Some(workspace) = load_workspace(&path, &dir_name, &home_dir, &home_prefix, mode)? {
             workspaces.push(workspace);
         }
     }
@@ -33,11 +53,22 @@ pub fn load_workspaces() -> Result<Vec<Workspace>> {
     Ok(workspaces)
 }
 
+pub fn hydrate_conversation(conversation: &Conversation) -> Result<Option<Conversation>> {
+    match conversation.load_ref.as_ref() {
+        Some(ConversationLoadRef::ClaudeFile { path }) => {
+            parse_conversation_file(Path::new(path), LoadMode::Full)
+        }
+        Some(ConversationLoadRef::Indexed { .. }) | None => Ok(Some(conversation.clone())),
+        Some(ConversationLoadRef::CodexFiles { .. }) => Ok(Some(conversation.clone())),
+    }
+}
+
 fn load_workspace(
     path: &Path,
     dir_name: &str,
     home_dir: &str,
     home_prefix: &str,
+    mode: LoadMode,
 ) -> Result<Option<Workspace>> {
     let workspace_name = clean_project_name(path, dir_name, home_dir, home_prefix);
     let mut conversations = Vec::new();
@@ -51,7 +82,7 @@ fn load_workspace(
             continue;
         }
 
-        if let Some(conversation) = parse_conversation_file(&file_path)? {
+        if let Some(conversation) = parse_conversation_file(&file_path, mode)? {
             workspace_updated_at = workspace_updated_at.max(conversation.updated_at);
             conversations.push(conversation);
         }
@@ -72,32 +103,60 @@ fn load_workspace(
     }))
 }
 
-fn parse_conversation_file(file_path: &Path) -> Result<Option<Conversation>> {
+fn parse_conversation_file(file_path: &Path, mode: LoadMode) -> Result<Option<Conversation>> {
     let conv_id = match file_path.file_stem().and_then(|stem| stem.to_str()) {
         Some(id) => id.to_string(),
         None => return Ok(None),
     };
-    let content = fs::read_to_string(file_path)?;
+
+    let Some(parsed) = scan_conversation_file(file_path, mode)? else {
+        return Ok(None);
+    };
+
+    let short_id = conv_id.chars().take(8).collect::<String>();
+
+    Ok(Some(Conversation {
+        id: short_id,
+        external_id: Some(conv_id),
+        title: parsed.title,
+        preview: parsed.preview,
+        provider: ProviderKind::ClaudeCode,
+        created_at: parsed.created_at,
+        updated_at: parsed.updated_at,
+        segments: vec![],
+        messages: parsed.messages,
+        is_hydrated: true,
+        load_ref: Some(ConversationLoadRef::ClaudeFile {
+            path: file_path.to_string_lossy().to_string(),
+        }),
+    }))
+}
+
+fn scan_conversation_file(file_path: &Path, _mode: LoadMode) -> Result<Option<ParsedConversation>> {
+    let file = File::open(file_path)?;
+    let reader = BufReader::new(file);
 
     let mut messages = Vec::new();
     let mut custom_title = None;
+    let mut user_preview = None;
+    let mut fallback_preview = None;
     let mut conv_updated_at = 0i64;
     let mut conv_created_at = i64::MAX;
 
-    for line in content.lines() {
-        let Ok(val) = serde_json::from_str::<Value>(line) else {
+    for line in reader.lines() {
+        let line = line?;
+        let Ok(val) = serde_json::from_str::<Value>(&line) else {
             continue;
         };
 
-        if let Some(ts_str) = val
+        let timestamp_ms = val
             .get("timestamp")
             .and_then(|timestamp| timestamp.as_str())
-        {
-            if let Ok(dt) = DateTime::parse_from_rfc3339(ts_str) {
-                let ts_ms = dt.timestamp_millis();
-                conv_updated_at = conv_updated_at.max(ts_ms);
-                conv_created_at = conv_created_at.min(ts_ms);
-            }
+            .and_then(parse_timestamp_millis);
+
+        if let Some(ts_ms) = timestamp_ms {
+            conv_updated_at = conv_updated_at.max(ts_ms);
+            conv_created_at = conv_created_at.min(ts_ms);
         }
 
         if let Some(title) = val.get("customTitle").and_then(|title| title.as_str()) {
@@ -116,19 +175,34 @@ fn parse_conversation_file(file_path: &Path) -> Result<Option<Conversation>> {
             continue;
         };
 
+        if fallback_preview.is_none() {
+            fallback_preview = first_non_empty_line(&text_content).map(str::to_string);
+        }
+        if user_preview.is_none() && role.eq_ignore_ascii_case("user") {
+            user_preview = first_non_empty_line(&text_content).map(str::to_string);
+        }
+
+        let participant = Participant::from_role(role, ProviderKind::ClaudeCode);
         messages.push(Message {
             id: None,
-            participant: Participant::from_role(role, ProviderKind::ClaudeCode),
-            content: text_content,
-            timestamp: if conv_updated_at > 0 {
-                Some(conv_updated_at)
-            } else {
-                None
+            kind: match participant {
+                Participant::User => MessageKind::UserMessage,
+                Participant::Assistant { .. } => MessageKind::AssistantMessage,
+                Participant::Tool { .. } => MessageKind::ToolResult,
+                Participant::System | Participant::Unknown { .. } => MessageKind::MetadataChange,
             },
+            participant,
+            content: text_content,
+            timestamp: timestamp_ms,
+            parent_id: None,
+            associated_id: None,
+            depth: 0,
         });
     }
 
-    if messages.is_empty() {
+    let preview = user_preview.or(fallback_preview);
+    let has_content = !messages.is_empty() || preview.is_some() || custom_title.is_some();
+    if !has_content {
         return Ok(None);
     }
 
@@ -136,13 +210,9 @@ fn parse_conversation_file(file_path: &Path) -> Result<Option<Conversation>> {
         conv_created_at = conv_updated_at;
     }
 
-    let short_id = conv_id.chars().take(8).collect::<String>();
-
-    Ok(Some(Conversation {
-        id: short_id,
-        external_id: Some(conv_id),
+    Ok(Some(ParsedConversation {
         title: custom_title,
-        provider: ProviderKind::ClaudeCode,
+        preview,
         created_at: conv_created_at,
         updated_at: conv_updated_at,
         messages,
@@ -260,6 +330,16 @@ fn extract_message_content(content: Option<&Value>) -> Option<String> {
     } else {
         Some(text_content)
     }
+}
+
+fn parse_timestamp_millis(timestamp: &str) -> Option<i64> {
+    DateTime::parse_from_rfc3339(timestamp)
+        .ok()
+        .map(|dt| dt.timestamp_millis())
+}
+
+fn first_non_empty_line(content: &str) -> Option<&str> {
+    content.lines().map(str::trim).find(|line| !line.is_empty())
 }
 
 #[cfg(test)]

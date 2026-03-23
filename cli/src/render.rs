@@ -6,30 +6,54 @@ use ratatui::{
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, TableState},
     Frame,
 };
-use shared::{MessagePreview, ViewContent, ViewModel};
+use shared::{MessageKind, MessagePreview, ViewContent, ViewModel};
 
-pub fn render_messages_list(f: &mut Frame, area: Rect, messages: &[MessagePreview], theme: &Theme) {
+pub fn render_messages_list(
+    f: &mut Frame,
+    area: Rect,
+    messages: &[MessagePreview],
+    theme: &Theme,
+    selected_item_index: Option<usize>,
+    show_focus: bool,
+) {
     let mut list_items = Vec::new();
     let wrap_width = area.width.saturating_sub(4) as usize;
     let wrap_width = if wrap_width == 0 { 80 } else { wrap_width };
 
-    let mut focused_item_index = 0;
+    let mut selected_list_index = 0;
     let mut current_item_idx = 0;
 
-    for msg in messages {
-        if msg.is_focused {
-            focused_item_index = current_item_idx;
+    for (message_idx, msg) in messages.iter().enumerate() {
+        let is_selected_message = selected_item_index == Some(message_idx);
+        if is_selected_message || (show_focus && msg.is_focused) {
+            selected_list_index = current_item_idx;
         }
-
-        let is_user = msg.participant_label == "You";
-        let (color, prefix) = if is_user {
-            (theme.user_msg, msg.participant_label.as_str())
+        let item_style = if is_selected_message {
+            Style::default().bg(theme.selected_bg)
         } else {
-            (theme.assistant_msg, msg.participant_label.as_str())
+            Style::default()
         };
 
-        let focus_prefix = if msg.is_focused { "▎ " } else { "  " };
-        let focus_style = if msg.is_focused {
+        let (color, prefix) = match msg.kind {
+            MessageKind::UserMessage => (theme.user_msg, msg.participant_label.as_str()),
+            MessageKind::AssistantMessage => (theme.assistant_msg, msg.participant_label.as_str()),
+            MessageKind::ToolCall => (Color::Yellow, "Tool Call"),
+            MessageKind::ToolResult => (Color::LightYellow, "Tool Result"),
+            MessageKind::Thinking => (theme.dim, "Thinking"),
+            MessageKind::Summary => (Color::LightBlue, "Summary"),
+            MessageKind::Compaction => (Color::Magenta, "Compaction"),
+            MessageKind::Label => (Color::Green, "Label"),
+            MessageKind::MetadataChange => (theme.dim, msg.participant_label.as_str()),
+        };
+
+        let indent = "  ".repeat(msg.depth);
+
+        let focus_prefix = if show_focus && msg.is_focused {
+            "▎ "
+        } else {
+            "  "
+        };
+        let focus_style = if show_focus && msg.is_focused {
             Style::default().fg(Color::Cyan)
         } else {
             Style::default()
@@ -37,6 +61,7 @@ pub fn render_messages_list(f: &mut Frame, area: Rect, messages: &[MessagePrevie
 
         let mut header_spans = vec![
             Span::styled(focus_prefix, focus_style),
+            Span::raw(indent.clone()),
             Span::styled(
                 prefix,
                 Style::default().fg(color).add_modifier(Modifier::BOLD),
@@ -50,11 +75,11 @@ pub fn render_messages_list(f: &mut Frame, area: Rect, messages: &[MessagePrevie
             ));
         }
 
-        list_items.push(ListItem::new(Line::from(header_spans)));
-        list_items.push(ListItem::new(Line::from(vec![Span::styled(
-            focus_prefix,
-            focus_style,
-        )])));
+        list_items.push(ListItem::new(Line::from(header_spans)).style(item_style));
+        list_items.push(
+            ListItem::new(Line::from(vec![Span::styled(focus_prefix, focus_style)]))
+                .style(item_style),
+        );
         current_item_idx += 2;
 
         let wrapped_lines = textwrap::wrap(&msg.content, wrap_width);
@@ -62,51 +87,66 @@ pub fn render_messages_list(f: &mut Frame, area: Rect, messages: &[MessagePrevie
 
         if total_lines <= 12 || msg.is_expanded {
             for line in wrapped_lines {
-                list_items.push(ListItem::new(Line::from(vec![
-                    Span::styled(focus_prefix, focus_style),
-                    Span::raw(line.to_string()),
-                ])));
+                list_items.push(
+                    ListItem::new(Line::from(vec![
+                        Span::styled(focus_prefix, focus_style),
+                        Span::raw(indent.clone()),
+                        Span::raw(line.to_string()),
+                    ]))
+                    .style(item_style),
+                );
                 current_item_idx += 1;
             }
         } else {
             for line in &wrapped_lines[0..6] {
-                list_items.push(ListItem::new(Line::from(vec![
-                    Span::styled(focus_prefix, focus_style),
-                    Span::raw(line.to_string()),
-                ])));
+                list_items.push(
+                    ListItem::new(Line::from(vec![
+                        Span::styled(focus_prefix, focus_style),
+                        Span::raw(line.to_string()),
+                    ]))
+                    .style(item_style),
+                );
                 current_item_idx += 1;
             }
 
             let hidden = total_lines - 11;
             let trunc_msg = format!("... ({} more lines)", hidden);
-            list_items.push(ListItem::new(Line::from(vec![
-                Span::styled(focus_prefix, focus_style),
-                Span::styled(
-                    trunc_msg,
-                    Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
-                ),
-            ])));
+            list_items.push(
+                ListItem::new(Line::from(vec![
+                    Span::styled(focus_prefix, focus_style),
+                    Span::raw(indent.clone()),
+                    Span::styled(
+                        trunc_msg,
+                        Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
+                    ),
+                ]))
+                .style(item_style),
+            );
             current_item_idx += 1;
 
             for line in &wrapped_lines[total_lines - 5..] {
-                list_items.push(ListItem::new(Line::from(vec![
-                    Span::styled(focus_prefix, focus_style),
-                    Span::raw(line.to_string()),
-                ])));
+                list_items.push(
+                    ListItem::new(Line::from(vec![
+                        Span::styled(focus_prefix, focus_style),
+                        Span::raw(indent.clone()),
+                        Span::raw(line.to_string()),
+                    ]))
+                    .style(item_style),
+                );
                 current_item_idx += 1;
             }
         }
 
-        list_items.push(ListItem::new(Line::from(vec![Span::styled(
-            focus_prefix,
-            focus_style,
-        )])));
+        list_items.push(
+            ListItem::new(Line::from(vec![Span::styled(focus_prefix, focus_style)]))
+                .style(item_style),
+        );
         current_item_idx += 1;
     }
 
     let list = List::new(list_items).block(Block::default());
     let mut preview_state = ListState::default();
-    preview_state.select(Some(focused_item_index));
+    preview_state.select(Some(selected_list_index));
     f.render_stateful_widget(list, area, &mut preview_state);
 }
 
@@ -290,10 +330,17 @@ pub fn render_ui(
             left_state.select(Some(view_model.selected_index));
             f.render_stateful_widget(left_list, split_layout[0], &mut left_state);
 
-            render_messages_list(f, split_layout[2], right_messages, theme);
+            render_messages_list(f, split_layout[2], right_messages, theme, None, true);
         }
         ViewContent::MessagesList(messages) => {
-            render_messages_list(f, padded_content[1], messages, theme);
+            render_messages_list(
+                f,
+                padded_content[1],
+                messages,
+                theme,
+                Some(view_model.selected_index),
+                false,
+            );
         }
         ViewContent::List(list_items) => {
             let items: Vec<ListItem> = list_items
@@ -308,15 +355,19 @@ pub fn render_ui(
         }
     }
 
+    let bindings_text = match &view_model.content {
+        ViewContent::MessagesList(_) => " [↑/↓] Scroll  [Esc/h] Back  [Y/y] Copy  [q] Quit ",
+        _ => {
+            " [↑/k ↓/j] Navigate  [e] Expand  [Enter/l] Select  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+        }
+    };
+
     let footer_spans = vec![
         Span::styled(
             format!("  {}  ", view_model.filter_text),
             Style::default().fg(theme.dim),
         ),
-        Span::styled(
-            " [↑/k ↓/j] Navigate  [J/K] Messages  [e] Expand  [Enter/l] Select  [Esc/h] Back  [Y/y] Copy  [q] Quit ",
-            Style::default().fg(theme.dim),
-        ),
+        Span::styled(bindings_text, Style::default().fg(theme.dim)),
     ];
     let footer = Paragraph::new(Line::from(footer_spans));
     f.render_widget(footer, chunks[2]);
@@ -326,7 +377,8 @@ pub fn render_ui(
 mod tests {
     use super::*;
     use crate::test_utils;
-    use ratatui::backend::TestBackend;
+    use ratatui::{backend::TestBackend, Terminal};
+    use shared::ConversationPreview;
 
     #[test]
     fn test_render_workspaces_table() {
@@ -400,15 +452,19 @@ mod tests {
                 ],
                 right_messages: vec![
                     MessagePreview {
+                        kind: MessageKind::UserMessage,
                         participant_label: "You".into(),
                         content: "hello".into(),
+                        depth: 0,
                         is_focused: true,
                         is_expanded: false,
                         relative_time: Some("1d ago".into()),
                     },
                     MessagePreview {
+                        kind: MessageKind::AssistantMessage,
                         participant_label: "Codex".into(),
                         content: "hi there".into(),
+                        depth: 0,
                         is_focused: false,
                         is_expanded: false,
                         relative_time: Some("1d ago".into()),
