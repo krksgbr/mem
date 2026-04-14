@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, TableState},
     Frame,
 };
-use shared::{MessageKind, MessagePreview, ViewContent, ViewModel};
+use shared::{MessageKind, MessagePreview, TreeRowPreview, ViewContent, ViewModel};
 
 struct RenderedMessageBlock {
     lines: Vec<Line<'static>>,
@@ -42,6 +42,7 @@ fn render_message_block(
     theme: &Theme,
     is_selected_message: bool,
     show_focus: bool,
+    tree_mode: bool,
 ) -> RenderedMessageBlock {
     let item_style = if is_selected_message {
         Style::default().bg(theme.selected_bg)
@@ -61,7 +62,11 @@ fn render_message_block(
         MessageKind::MetadataChange => (theme.dim, msg.participant_label.as_str()),
     };
 
-    let indent = "  ".repeat(msg.depth);
+    let indent = if tree_mode && msg.depth > 0 {
+        format!("{}↳ ", "  ".repeat(msg.depth.saturating_sub(1)))
+    } else {
+        "  ".repeat(msg.depth)
+    };
     let focus_prefix = if show_focus && msg.is_focused {
         "▎ "
     } else {
@@ -158,6 +163,7 @@ fn visible_message_blocks(
     show_focus: bool,
     area: Rect,
     theme: &Theme,
+    tree_mode: bool,
 ) -> Vec<RenderedMessageBlock> {
     if messages.is_empty() || area.height == 0 {
         return Vec::new();
@@ -175,6 +181,7 @@ fn visible_message_blocks(
         theme,
         selected_item_index == Some(selected_idx),
         show_focus,
+        tree_mode,
     );
     let mut total_lines = selected_block.line_count();
     let target_lines = area.height as usize;
@@ -190,6 +197,7 @@ fn visible_message_blocks(
                 theme,
                 selected_item_index == Some(prev_idx),
                 show_focus,
+                tree_mode,
             );
             total_lines += block.line_count();
             blocks_before.push(block);
@@ -208,6 +216,7 @@ fn visible_message_blocks(
                 theme,
                 selected_item_index == Some(next_idx),
                 show_focus,
+                tree_mode,
             );
             total_lines += block.line_count();
             blocks_after.push(block);
@@ -227,9 +236,16 @@ pub fn render_messages_list(
     theme: &Theme,
     selected_item_index: Option<usize>,
     show_focus: bool,
+    tree_mode: bool,
 ) {
-    let visible_blocks =
-        visible_message_blocks(messages, selected_item_index, show_focus, area, theme);
+    let visible_blocks = visible_message_blocks(
+        messages,
+        selected_item_index,
+        show_focus,
+        area,
+        theme,
+        tree_mode,
+    );
     let visible_lines = visible_blocks
         .into_iter()
         .flat_map(|block| block.lines)
@@ -238,6 +254,54 @@ pub fn render_messages_list(
 
     let paragraph = Paragraph::new(visible_lines).block(Block::default());
     f.render_widget(paragraph, area);
+}
+
+fn render_tree_list(
+    f: &mut Frame,
+    area: Rect,
+    rows: &[TreeRowPreview],
+    selected_index: usize,
+    theme: &Theme,
+) {
+    let items = rows
+        .iter()
+        .map(|row| {
+            let marker = if row.is_expandable {
+                if row.is_expanded {
+                    "▾ "
+                } else {
+                    "▸ "
+                }
+            } else {
+                "  "
+            };
+            let indent = "  ".repeat(row.depth);
+            let mut spans = vec![Span::raw(format!("{indent}{marker}"))];
+            spans.push(Span::styled(
+                row.label.clone(),
+                Style::default().add_modifier(if row.depth == 0 {
+                    Modifier::BOLD
+                } else {
+                    Modifier::empty()
+                }),
+            ));
+            if let Some(secondary) = &row.secondary {
+                spans.push(Span::styled(
+                    format!("  {secondary}"),
+                    Style::default().fg(theme.dim),
+                ));
+            }
+
+            ListItem::new(Line::from(spans))
+        })
+        .collect::<Vec<_>>();
+
+    let list = List::new(items)
+        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .highlight_symbol("");
+    let mut state = ListState::default();
+    state.select(Some(selected_index));
+    f.render_stateful_widget(list, area, &mut state);
 }
 
 pub fn render_ui(
@@ -420,7 +484,21 @@ pub fn render_ui(
             left_state.select(Some(view_model.selected_index));
             f.render_stateful_widget(left_list, split_layout[0], &mut left_state);
 
-            render_messages_list(f, split_layout[2], right_messages, theme, None, true);
+            render_messages_list(f, split_layout[2], right_messages, theme, None, true, false);
+        }
+        ViewContent::TreeList(rows) => {
+            render_tree_list(f, padded_content[1], rows, view_model.selected_index, theme);
+        }
+        ViewContent::HistoryList(messages) => {
+            render_messages_list(
+                f,
+                padded_content[1],
+                messages,
+                theme,
+                Some(view_model.selected_index),
+                false,
+                true,
+            );
         }
         ViewContent::MessagesList(messages) => {
             render_messages_list(
@@ -429,6 +507,7 @@ pub fn render_ui(
                 messages,
                 theme,
                 Some(view_model.selected_index),
+                false,
                 false,
             );
         }
@@ -446,6 +525,12 @@ pub fn render_ui(
     }
 
     let bindings_text = match &view_model.content {
+        ViewContent::TreeList(_) => {
+            " [↑/k ↓/j] Navigate  [e/l] Expand  [Enter] Read  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+        }
+        ViewContent::HistoryList(_) => {
+            " [↑/k ↓/j] Navigate  [Enter/l] Read  [e] Expand  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+        }
         ViewContent::MessagesList(_) => " [↑/↓] Scroll  [Esc/h] Back  [Y/y] Copy  [q] Quit ",
         _ => {
             " [↑/k ↓/j] Navigate  [e] Expand  [Enter/l] Select  [Esc/h] Back  [Y/y] Copy  [q] Quit "

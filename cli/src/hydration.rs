@@ -1,6 +1,6 @@
 use crate::{indexed, providers};
 use anyhow::{anyhow, Result};
-use shared::{ConversationLoadRef, LayoutMode, Model, Screen};
+use shared::{visible_conversation_target, ConversationLoadRef, Model};
 
 pub fn hydrate_visible_conversation(model: &mut Model) -> Result<()> {
     let Some((workspace_idx, conv_idx)) = visible_conversation_target(model) else {
@@ -80,43 +80,4 @@ fn indexed_hydration_error(
         "failed to hydrate indexed conversation: indexed_id='{indexed_conversation_id}', conversation_id='{conversation_id}', external_id='{}', load_ref={load_ref_summary}",
         external_id.unwrap_or("<none>")
     )
-}
-
-fn visible_conversation_target(model: &Model) -> Option<(usize, usize)> {
-    match &model.screen {
-        Screen::Messages {
-            workspace_idx,
-            conv_idx,
-            ..
-        } => Some((*workspace_idx, *conv_idx)),
-        Screen::Conversations {
-            workspace_idx,
-            selected_conversation,
-            layout_mode,
-            ..
-        } if *layout_mode == LayoutMode::Split => {
-            filtered_conversation_actual_idx(model, *workspace_idx, *selected_conversation)
-                .map(|conv_idx| (*workspace_idx, conv_idx))
-        }
-        _ => None,
-    }
-}
-
-fn filtered_conversation_actual_idx(
-    model: &Model,
-    workspace_idx: usize,
-    selected_conversation: usize,
-) -> Option<usize> {
-    model.workspaces.get(workspace_idx).and_then(|workspace| {
-        workspace
-            .conversations
-            .iter()
-            .enumerate()
-            .filter(|(_, conversation)| match model.provider_filter {
-                Some(provider) => conversation.provider == provider,
-                None => true,
-            })
-            .nth(selected_conversation)
-            .map(|(idx, _)| idx)
-    })
 }

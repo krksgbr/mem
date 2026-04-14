@@ -66,6 +66,7 @@ pub struct DumpScreenArgs {
 pub enum ScreenTarget {
     Workspaces,
     Conversations,
+    History,
     Messages,
 }
 
@@ -331,16 +332,18 @@ fn validate_dump_screen_args(args: &DumpScreenArgs) -> Result<()> {
     match args.screen {
         ScreenTarget::Workspaces => {
             if args.workspace.is_some() {
-                bail!("--workspace is only valid for conversations or messages screens");
+                bail!("--workspace is only valid for conversations, history, or messages screens");
             }
             if args.conversation.is_some() {
-                bail!("--conversation is only valid for conversations or messages screens");
+                bail!(
+                    "--conversation is only valid for conversations, history, or messages screens"
+                );
             }
             if args.layout.is_some() {
                 bail!("--layout is only valid for the conversations screen");
             }
             if args.message_index != 0 {
-                bail!("--message-index is only valid for split conversations or messages screens");
+                bail!("--message-index is only valid for history, split conversations, or messages screens");
             }
             if args.expand_all {
                 bail!("--expand-all is only valid for the conversations screen");
@@ -349,6 +352,23 @@ fn validate_dump_screen_args(args: &DumpScreenArgs) -> Result<()> {
         ScreenTarget::Conversations => {
             if args.workspace.is_none() {
                 bail!("--workspace is required for the conversations screen");
+            }
+        }
+        ScreenTarget::History => {
+            if args.workspace.is_none() {
+                bail!("--workspace is required for the history screen");
+            }
+            if args.conversation.is_none() {
+                bail!("--conversation is required for the history screen");
+            }
+            if args.layout.is_some() {
+                bail!("--layout is only valid for the conversations screen");
+            }
+            if args.selected != 0 {
+                bail!("--selected is not used for the history screen");
+            }
+            if args.expand_all {
+                bail!("--expand-all is only valid for the conversations screen");
             }
         }
         ScreenTarget::Messages => {
@@ -385,9 +405,10 @@ fn parse_screen(value: &str) -> Result<ScreenTarget> {
     match value {
         "workspaces" => Ok(ScreenTarget::Workspaces),
         "conversations" => Ok(ScreenTarget::Conversations),
+        "history" => Ok(ScreenTarget::History),
         "messages" => Ok(ScreenTarget::Messages),
         other => {
-            bail!("invalid screen '{other}'. expected one of: workspaces, conversations, messages")
+            bail!("invalid screen '{other}'. expected one of: workspaces, conversations, history, messages")
         }
     }
 }

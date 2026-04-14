@@ -291,6 +291,8 @@ impl SessionAccumulator {
         Conversation {
             id: self.session_id.chars().take(8).collect(),
             external_id: Some(self.session_id),
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
             title: self.title,
             preview,
             provider: ProviderKind::Codex,

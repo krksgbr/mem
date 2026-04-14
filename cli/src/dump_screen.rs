@@ -11,7 +11,8 @@ use ratatui::{
     Terminal,
 };
 use shared::{
-    Event, LayoutMode, Model, ProviderKind, Screen, TranscriptBrowser, ViewModel, Workspace,
+    Event, LayoutMode, Model, ProviderKind, Screen, TranscriptBrowser, ViewContent, ViewModel,
+    Workspace,
 };
 use std::env;
 
@@ -51,9 +52,31 @@ pub(crate) fn resolve_screen(
             move_to_workspace(app, model, workspace_idx)?;
             let _ = app.update(Event::Select, model, &());
 
+            hydration::hydrate_visible_conversation(model)?;
             apply_expand_all(app, model, args.expand_all)?;
             apply_conversation_selection(app, model, args.conversation.as_deref(), args.selected)?;
+            hydration::hydrate_visible_conversation(model)?;
+            apply_message_index(app, model, args.message_index)?;
             apply_layout(app, model, args.layout.clone())?;
+            Ok(())
+        }
+        ScreenTarget::History => {
+            let workspace = args
+                .workspace
+                .as_deref()
+                .ok_or_else(|| anyhow!("--workspace is required for the history screen"))?;
+            let conversation = args
+                .conversation
+                .as_deref()
+                .ok_or_else(|| anyhow!("--conversation is required for the history screen"))?;
+
+            let workspace_idx = find_workspace_index(&model.workspaces, workspace)?;
+            move_to_workspace(app, model, workspace_idx)?;
+            let _ = app.update(Event::Select, model, &());
+
+            apply_conversation_selection(app, model, Some(conversation), 0)?;
+            hydration::hydrate_visible_conversation(model)?;
+            let _ = app.update(Event::ToggleMessage, model, &());
             hydration::hydrate_visible_conversation(model)?;
             apply_message_index(app, model, args.message_index)?;
             Ok(())
@@ -133,20 +156,99 @@ fn apply_conversation_selection(
     conversation: Option<&str>,
     selected: usize,
 ) -> Result<()> {
+    if let Some(conversation) = conversation {
+        expand_conversation_ancestors(app, model, conversation)?;
+    }
+
     let target_idx = find_target_conversation_index(model, conversation, selected)?;
 
-    while let Screen::Conversations {
-        selected_conversation,
-        ..
-    } = &model.screen
-    {
-        if *selected_conversation == target_idx {
+    while let Screen::Conversations { selected_row, .. } = &model.screen {
+        if *selected_row == target_idx {
             return Ok(());
         }
         let _ = app.update(Event::Down, model, &());
     }
 
     bail!("expected to be on the conversations screen")
+}
+
+fn expand_conversation_ancestors(
+    app: &TranscriptBrowser,
+    model: &mut Model,
+    conversation: &str,
+) -> Result<()> {
+    let Screen::Conversations { workspace_idx, .. } = &model.screen else {
+        bail!("expected to be on the conversations screen");
+    };
+
+    let workspace = &model.workspaces[*workspace_idx];
+    let filtered = filtered_conversations(workspace, model.provider_filter);
+    let Some((_, target_conversation)) = filtered
+        .iter()
+        .find(|(_, conv)| conversation_matches(conv, conversation))
+    else {
+        bail!(
+            "conversation '{}' was not found in workspace '{}'",
+            conversation,
+            workspace.display_name
+        );
+    };
+
+    let by_id = filtered
+        .iter()
+        .map(|(_, conv)| (conv.id.as_str(), *conv))
+        .collect::<std::collections::HashMap<_, _>>();
+
+    let mut ancestor_ids = Vec::new();
+    let mut cursor = target_conversation.branch_parent_id.as_deref();
+    while let Some(parent_id) = cursor {
+        ancestor_ids.push(parent_id.to_string());
+        cursor = by_id
+            .get(parent_id)
+            .and_then(|conv| conv.branch_parent_id.as_deref());
+    }
+    ancestor_ids.reverse();
+
+    for ancestor_id in ancestor_ids {
+        select_tree_row_by_id(app, model, &format!("conv:{ancestor_id}"))?;
+        let view = app_view(model);
+        let ViewContent::TreeList(rows) = view.content else {
+            bail!("expected tree list on conversations screen");
+        };
+        if rows
+            .get(view.selected_index)
+            .map(|row| row.is_expandable && !row.is_expanded)
+            .unwrap_or(false)
+        {
+            let _ = app.update(Event::ToggleMessage, model, &());
+        }
+    }
+
+    Ok(())
+}
+
+fn select_tree_row_by_id(
+    app: &TranscriptBrowser,
+    model: &mut Model,
+    target_row_id: &str,
+) -> Result<()> {
+    loop {
+        let view = app_view(model);
+        let ViewContent::TreeList(rows) = view.content else {
+            bail!("expected tree list on conversations screen");
+        };
+        let Some(target_idx) = rows.iter().position(|row| row.id == target_row_id) else {
+            bail!("tree row '{}' is not visible", target_row_id);
+        };
+        if view.selected_index == target_idx {
+            return Ok(());
+        }
+        if view.selected_index < target_idx {
+            let _ = app.update(Event::Down, model, &());
+        } else {
+            let _ = app.update(Event::Up, model, &());
+        }
+    }
 }
 
 fn find_target_conversation_index(
@@ -158,44 +260,57 @@ fn find_target_conversation_index(
         bail!("expected to be on the conversations screen");
     };
 
-    let workspace = &model.workspaces[*workspace_idx];
-    let filtered = filtered_conversations(workspace, model.provider_filter);
+    let view_model = app_view(model);
+    let ViewContent::TreeList(rows) = view_model.content else {
+        bail!("expected tree list on conversations screen");
+    };
 
-    if filtered.is_empty() {
+    if rows.is_empty() {
+        let workspace = &model.workspaces[*workspace_idx];
         bail!(
             "workspace '{}' has no conversations for the current filter",
             workspace.display_name
         );
     }
 
-    if let Some(conversation) = conversation {
-        return filtered
-            .iter()
-            .enumerate()
-            .find(|(_, item)| conversation_matches(item.1, conversation))
-            .map(|(idx, _)| idx)
-            .ok_or_else(|| {
-                anyhow!(
-                    "conversation '{}' was not found in workspace '{}'",
-                    conversation,
-                    workspace.display_name
-                )
-            });
+    if conversation.is_none() {
+        if selected >= rows.len() {
+            bail!(
+                "conversation row index {} is out of range for {} visible rows",
+                selected,
+                rows.len()
+            );
+        }
+        return Ok(selected);
     }
 
-    if selected < filtered.len() {
-        Ok(selected)
-    } else {
-        bail!(
-            "conversation index {} is out of range for {} visible conversations",
-            selected,
-            filtered.len()
-        )
-    }
+    let workspace = &model.workspaces[*workspace_idx];
+    let filtered = filtered_conversations(workspace, model.provider_filter);
+    let target_conversation = filtered
+        .iter()
+        .find(|item| conversation_matches(item.1, conversation.unwrap()))
+        .map(|(_, conv)| conv)
+        .ok_or_else(|| {
+            anyhow!(
+                "conversation '{}' was not found in workspace '{}'",
+                conversation.unwrap(),
+                workspace.display_name
+            )
+        })?;
+
+    let target_id = format!("conv:{}", target_conversation.id);
+    rows.iter()
+        .position(|row| row.id == target_id)
+        .ok_or_else(|| {
+            anyhow!(
+                "conversation row '{}' is not visible",
+                target_conversation.id
+            )
+        })
 }
 
 fn apply_layout(
-    app: &TranscriptBrowser,
+    _app: &TranscriptBrowser,
     model: &mut Model,
     requested: Option<LayoutMode>,
 ) -> Result<()> {
@@ -203,12 +318,12 @@ fn apply_layout(
         return Ok(());
     };
 
-    let Screen::Conversations { layout_mode, .. } = &model.screen else {
+    let Screen::Conversations { .. } = &model.screen else {
         bail!("--layout is only valid on the conversations screen");
     };
 
-    if *layout_mode != requested {
-        let _ = app.update(Event::ToggleLayout, model, &());
+    if requested != LayoutMode::Table {
+        bail!("only table/tree layout is supported on the conversations screen");
     }
 
     Ok(())
@@ -219,29 +334,66 @@ fn apply_expand_all(app: &TranscriptBrowser, model: &mut Model, expand_all: bool
         return Ok(());
     }
 
-    let Screen::Conversations { workspace_idx, .. } = &model.screen else {
+    let Screen::Conversations { .. } = &model.screen else {
         bail!("--expand-all is only valid on the conversations screen");
     };
 
-    let conversation_count =
-        filtered_conversations(&model.workspaces[*workspace_idx], model.provider_filter).len();
-    for _ in 0..conversation_count {
-        let _ = app.update(Event::ToggleMessage, model, &());
-        let _ = app.update(Event::Down, model, &());
-    }
-
-    while let Screen::Conversations {
-        selected_conversation,
-        ..
-    } = &model.screen
-    {
-        if *selected_conversation == 0 {
+    let mut idx = 0usize;
+    loop {
+        let view = app_view(model);
+        let ViewContent::TreeList(rows) = view.content else {
+            bail!("expected tree list on conversations screen");
+        };
+        if idx >= rows.len() {
             break;
         }
-        let _ = app.update(Event::Up, model, &());
+
+        select_conversation_row_index(app, model, idx)?;
+        let current = app_view(model);
+        let ViewContent::TreeList(current_rows) = current.content else {
+            bail!("expected tree list on conversations screen");
+        };
+        if current_rows
+            .get(current.selected_index)
+            .map(|row| row.is_expandable && !row.is_expanded)
+            .unwrap_or(false)
+        {
+            let _ = app.update(Event::ToggleMessage, model, &());
+        }
+        idx += 1;
     }
 
+    select_conversation_row_index(app, model, 0)?;
+
     Ok(())
+}
+
+fn select_conversation_row_index(
+    app: &TranscriptBrowser,
+    model: &mut Model,
+    target_idx: usize,
+) -> Result<()> {
+    loop {
+        let view = app_view(model);
+        let ViewContent::TreeList(rows) = view.content else {
+            bail!("expected tree list on conversations screen");
+        };
+        if target_idx >= rows.len() {
+            bail!(
+                "conversation row index {} is out of range for {} visible rows",
+                target_idx,
+                rows.len()
+            );
+        }
+        if view.selected_index == target_idx {
+            return Ok(());
+        }
+        if view.selected_index < target_idx {
+            let _ = app.update(Event::Down, model, &());
+        } else {
+            let _ = app.update(Event::Up, model, &());
+        }
+    }
 }
 
 fn apply_message_index(
@@ -256,7 +408,7 @@ fn apply_message_index(
     match &model.screen {
         Screen::Conversations { .. } => {
             for _ in 0..message_index {
-                let _ = app.update(Event::MessageDown, model, &());
+                let _ = app.update(Event::Down, model, &());
             }
             Ok(())
         }
@@ -270,6 +422,11 @@ fn apply_message_index(
             bail!("--message-index is not valid on the workspaces screen")
         }
     }
+}
+
+fn app_view(model: &Model) -> ViewModel {
+    let app = TranscriptBrowser;
+    app.view(model)
 }
 
 fn filtered_conversations(
@@ -394,6 +551,8 @@ mod tests {
                 Conversation {
                     id: "codex-1".into(),
                     external_id: Some("codex-external".into()),
+                    branch_parent_id: None,
+                    branch_anchor_message_id: None,
                     title: None,
                     preview: Some("hello from user".into()),
                     provider: ProviderKind::Codex,
@@ -447,6 +606,8 @@ mod tests {
                 Conversation {
                     id: "claude-1".into(),
                     external_id: Some("claude-external".into()),
+                    branch_parent_id: None,
+                    branch_anchor_message_id: None,
                     title: Some("Claude Session".into()),
                     preview: Some("claude content".into()),
                     provider: ProviderKind::ClaudeCode,
@@ -461,6 +622,81 @@ mod tests {
                         },
                         content: "claude content".into(),
                         timestamp: Some(800_000),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    }],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+            ],
+        }
+    }
+
+    fn anchored_branch_workspace() -> Workspace {
+        Workspace {
+            id: "ws-branches".into(),
+            display_name: "~/projects/branches".into(),
+            source_path: Some("/Users/gaborkerekes/projects/branches".into()),
+            updated_at: 1_000_000,
+            conversations: vec![
+                Conversation {
+                    id: "parent".into(),
+                    external_id: Some("parent-external".into()),
+                    branch_parent_id: None,
+                    branch_anchor_message_id: None,
+                    title: Some("Parent".into()),
+                    preview: Some("parent root".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 900_000,
+                    updated_at: 999_000,
+                    segments: vec![],
+                    messages: vec![
+                        Message {
+                            id: Some("anchor-msg".into()),
+                            kind: MessageKind::UserMessage,
+                            participant: Participant::User,
+                            content: "anchor".into(),
+                            timestamp: Some(900_000),
+                            parent_id: None,
+                            associated_id: None,
+                            depth: 0,
+                        },
+                        Message {
+                            id: Some("reply-msg".into()),
+                            kind: MessageKind::AssistantMessage,
+                            participant: Participant::Assistant {
+                                provider: ProviderKind::ClaudeCode,
+                            },
+                            content: "reply".into(),
+                            timestamp: Some(999_000),
+                            parent_id: Some("anchor-msg".into()),
+                            associated_id: None,
+                            depth: 0,
+                        },
+                    ],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+                Conversation {
+                    id: "child".into(),
+                    external_id: Some("child-external".into()),
+                    branch_parent_id: Some("parent".into()),
+                    branch_anchor_message_id: Some("anchor-msg".into()),
+                    title: Some("Child Branch".into()),
+                    preview: Some("child root".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 950_000,
+                    updated_at: 998_000,
+                    segments: vec![],
+                    messages: vec![Message {
+                        id: Some("child-root".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "child root".into(),
+                        timestamp: Some(998_000),
                         parent_id: None,
                         associated_id: None,
                         depth: 0,
@@ -493,14 +729,12 @@ mod tests {
         )
         .unwrap();
 
-        assert!(output.contains("Conversation"));
-        assert!(output.contains("Provider"));
         assert!(output.contains("Codex"));
         assert!(output.contains("hello from user"));
     }
 
     #[test]
-    fn dump_conversations_table_can_expand_all_segments() {
+    fn dump_conversations_tree_can_expand_all_entries() {
         let output = dump_screen_output(
             &DumpScreenArgs {
                 screen: ScreenTarget::Conversations,
@@ -520,8 +754,59 @@ mod tests {
         )
         .unwrap();
 
-        assert!(output.contains("main session"));
-        assert!(output.contains("rollout 019d1665..."));
+        assert!(output.contains("hello from user"));
+        assert!(output.contains("assistant response"));
+    }
+
+    #[test]
+    fn dump_conversations_tree_expand_all_reaches_anchored_branch_conversations() {
+        let output = dump_screen_output(
+            &DumpScreenArgs {
+                screen: ScreenTarget::Conversations,
+                workspace: Some("~/projects/branches".into()),
+                conversation: Some("child".into()),
+                provider: Some(ProviderKind::ClaudeCode),
+                layout: Some(LayoutMode::Table),
+                width: 100,
+                height: 16,
+                now_ms: Some(1_000_000),
+                selected: 0,
+                message_index: 0,
+                expand_all: true,
+            },
+            vec![anchored_branch_workspace()],
+            1_000_000,
+        )
+        .unwrap();
+
+        assert!(output.contains("Parent"));
+        assert!(output.contains("anchor"));
+        assert!(output.contains("Child Branch"));
+    }
+
+    #[test]
+    fn dump_conversations_tree_expand_all_uses_visible_row_selection_not_flat_conversation_order() {
+        let output = dump_screen_output(
+            &DumpScreenArgs {
+                screen: ScreenTarget::Conversations,
+                workspace: Some("~/projects/branches".into()),
+                conversation: None,
+                provider: Some(ProviderKind::ClaudeCode),
+                layout: Some(LayoutMode::Table),
+                width: 100,
+                height: 16,
+                now_ms: Some(1_000_000),
+                selected: 0,
+                message_index: 0,
+                expand_all: true,
+            },
+            vec![anchored_branch_workspace()],
+            1_000_000,
+        )
+        .unwrap();
+
+        assert!(output.contains("Parent"));
+        assert!(output.contains("Child Branch"));
     }
 
     #[test]

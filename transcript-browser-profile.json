@@ -1,107 +1,317 @@
 {
   "status": "completed",
   "error": null,
-  "started_at_ms": 1776186684040,
-  "finished_at_ms": 1776186706309,
-  "frames": 6,
-  "key_frames": 6,
-  "width": 177,
+  "started_at_ms": 1776204001180,
+  "finished_at_ms": 1776204038344,
+  "frames": 41,
+  "key_frames": 41,
+  "width": 87,
   "height": 44,
   "log": [
     {
       "seq": 0,
-      "timestamp_ms": 1776186684040,
+      "timestamp_ms": 1776204001180,
       "phase": "startup",
       "detail": "starting interactive run"
     },
     {
       "seq": 1,
-      "timestamp_ms": 1776186684045,
+      "timestamp_ms": 1776204001186,
       "phase": "startup",
       "detail": "ensured default index"
     },
     {
       "seq": 2,
-      "timestamp_ms": 1776186684082,
+      "timestamp_ms": 1776204001218,
       "phase": "startup",
-      "detail": "entered terminal session at 177x44 with 37 workspaces"
+      "detail": "entered terminal session at 87x44 with 37 workspaces"
     },
     {
       "seq": 3,
-      "timestamp_ms": 1776186684608,
+      "timestamp_ms": 1776204002236,
       "phase": "input",
       "detail": "applied event Select from key Right"
     },
     {
       "seq": 4,
-      "timestamp_ms": 1776186685483,
+      "timestamp_ms": 1776204003144,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 5,
+      "timestamp_ms": 1776204003252,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 6,
+      "timestamp_ms": 1776204003993,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 7,
+      "timestamp_ms": 1776204004130,
       "phase": "input",
       "detail": "applied event Select from key Right"
     },
     {
-      "seq": 5,
-      "timestamp_ms": 1776186686275,
-      "phase": "input",
-      "detail": "applied event MessageDown from key Down"
-    },
-    {
-      "seq": 6,
-      "timestamp_ms": 1776186686623,
-      "phase": "input",
-      "detail": "applied event MessageDown from key Down"
-    },
-    {
-      "seq": 7,
-      "timestamp_ms": 1776186687117,
-      "phase": "input",
-      "detail": "applied event MessageDown from key Down"
-    },
-    {
       "seq": 8,
-      "timestamp_ms": 1776186705168,
+      "timestamp_ms": 1776204006692,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 9,
+      "timestamp_ms": 1776204007698,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 10,
+      "timestamp_ms": 1776204007795,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 11,
+      "timestamp_ms": 1776204008570,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 12,
+      "timestamp_ms": 1776204009099,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 13,
+      "timestamp_ms": 1776204009399,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 14,
+      "timestamp_ms": 1776204009529,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Left"
+    },
+    {
+      "seq": 15,
+      "timestamp_ms": 1776204009907,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 16,
+      "timestamp_ms": 1776204010023,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 17,
+      "timestamp_ms": 1776204010722,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 18,
+      "timestamp_ms": 1776204011721,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 19,
+      "timestamp_ms": 1776204012499,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 20,
+      "timestamp_ms": 1776204012958,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 21,
+      "timestamp_ms": 1776204012986,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 22,
+      "timestamp_ms": 1776204013745,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 23,
+      "timestamp_ms": 1776204014069,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 24,
+      "timestamp_ms": 1776204014193,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 25,
+      "timestamp_ms": 1776204014948,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 26,
+      "timestamp_ms": 1776204015473,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 27,
+      "timestamp_ms": 1776204015570,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 28,
+      "timestamp_ms": 1776204017223,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 29,
+      "timestamp_ms": 1776204017785,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 30,
+      "timestamp_ms": 1776204017906,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 31,
+      "timestamp_ms": 1776204018906,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 32,
+      "timestamp_ms": 1776204020430,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 33,
+      "timestamp_ms": 1776204021073,
+      "phase": "input",
+      "detail": "applied event Back from key Left"
+    },
+    {
+      "seq": 34,
+      "timestamp_ms": 1776204022766,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 35,
+      "timestamp_ms": 1776204022954,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 36,
+      "timestamp_ms": 1776204023120,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 37,
+      "timestamp_ms": 1776204023274,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 38,
+      "timestamp_ms": 1776204028904,
       "phase": "background_sync",
       "detail": "applied updated workspace snapshot (37 workspaces)"
     },
     {
-      "seq": 9,
-      "timestamp_ms": 1776186706308,
+      "seq": 39,
+      "timestamp_ms": 1776204030854,
+      "phase": "input",
+      "detail": "applied event Select from key Right"
+    },
+    {
+      "seq": 40,
+      "timestamp_ms": 1776204031536,
+      "phase": "input",
+      "detail": "applied event ToggleMessage from key Right"
+    },
+    {
+      "seq": 41,
+      "timestamp_ms": 1776204032487,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 42,
+      "timestamp_ms": 1776204033228,
+      "phase": "input",
+      "detail": "applied event Up from key Up"
+    },
+    {
+      "seq": 43,
+      "timestamp_ms": 1776204033823,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 44,
+      "timestamp_ms": 1776204038343,
       "phase": "input",
       "detail": "quit via key Char('q')"
     }
   ],
   "totals_ms": {
-    "poll_wait": 26.967499,
-    "update": 0.154499,
-    "hydrate": 0.007791,
-    "view": 1.439,
-    "render": 25.280335,
-    "total": 53.706083
+    "poll_wait": 361.80503799999997,
+    "update": 67.062918,
+    "hydrate": 98.73229300000001,
+    "view": 129.02674900000002,
+    "render": 139.83366799999996,
+    "total": 729.4755449999999
   },
   "averages_ms": {
-    "poll_wait": 4.494583166666667,
-    "update": 0.025749833333333333,
-    "hydrate": 0.0012985,
-    "view": 0.23983333333333334,
-    "render": 4.2133891666666665,
-    "total": 8.951013833333333
+    "poll_wait": 8.824513121951219,
+    "update": 1.6356809268292682,
+    "hydrate": 2.4081047073170736,
+    "view": 3.146993878048781,
+    "render": 3.410577268292682,
+    "total": 17.79208646341463
   },
   "worst_frame": {
-    "frame": 1,
-    "title": "Conversations in '~/unbody/bookmarking'",
-    "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-    "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
-    "active_id": "84cc7ca2-2111-4d93-a075-6d5684bdad1e",
-    "selected_index": 0,
-    "terminal_cells": 7788,
-    "key_code": "Right",
+    "frame": 38,
+    "title": "Conversations in '~/projects/transcript-browser'",
+    "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+    "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+    "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:0",
+    "selected_index": 1,
+    "terminal_cells": 3828,
+    "key_code": "Up",
     "input_outcome": "event",
     "durations_ms": {
-      "poll_wait": 15.469833000000001,
-      "update": 0.047625,
-      "hydrate": 0.000833,
-      "view": 0.083167,
-      "render": 5.389417,
-      "total": 20.944959
+      "poll_wait": 16.798582999999997,
+      "update": 0.028666999999999998,
+      "hydrate": 5.235458,
+      "view": 6.718584,
+      "render": 4.701042,
+      "total": 33.456125
     }
   },
   "frames_profiled": [
@@ -112,111 +322,776 @@
       "filter_text": "Filter: All Providers [F to cycle]",
       "active_id": null,
       "selected_index": 0,
-      "terminal_cells": 7788,
+      "terminal_cells": 3828,
       "key_code": "Right",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 1.280958,
-        "update": 0.028125,
-        "hydrate": 0.000583,
-        "view": 0.013667,
-        "render": 4.383375,
-        "total": 5.680499999999999
+        "poll_wait": 0.059375,
+        "update": 0.0235,
+        "hydrate": 0.0005,
+        "view": 0.015667,
+        "render": 2.8830829999999996,
+        "total": 2.960292
       }
     },
     {
       "frame": 1,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [~] Toggle Layout",
-      "active_id": "84cc7ca2-2111-4d93-a075-6d5684bdad1e",
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
       "selected_index": 0,
-      "terminal_cells": 7788,
-      "key_code": "Right",
+      "terminal_cells": 3828,
+      "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 15.469833000000001,
-        "update": 0.047625,
-        "hydrate": 0.000833,
-        "view": 0.083167,
-        "render": 5.389417,
-        "total": 20.944959
+        "poll_wait": 13.47875,
+        "update": 0.053625,
+        "hydrate": 0.031084000000000004,
+        "view": 0.018209000000000003,
+        "render": 1.4360410000000001,
+        "total": 14.96625
       }
     },
     {
       "frame": 2,
-      "title": "Messages in 'sticky-note-block-model-research (Branch)'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking > sticky-note-block-model-research (Branch)",
-      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
-      "active_id": "84cc7ca2-2111-4d93-a075-6d5684bdad1e",
-      "selected_index": 0,
-      "terminal_cells": 7788,
-      "key_code": "Down",
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Right",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 2.1795,
-        "update": 0.02875,
-        "hydrate": 0.001792,
-        "view": 0.456,
-        "render": 3.7460839999999997,
-        "total": 6.385375000000001
+        "poll_wait": 14.091667000000001,
+        "update": 0.052,
+        "hydrate": 0.027792,
+        "view": 0.017584,
+        "render": 1.343583,
+        "total": 15.482584000000001
       }
     },
     {
       "frame": 3,
-      "title": "Messages in 'sticky-note-block-model-research (Branch)'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking > sticky-note-block-model-research (Branch)",
-      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
-      "active_id": "84cc7ca2-2111-4d93-a075-6d5684bdad1e",
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
       "selected_index": 1,
-      "terminal_cells": 7788,
+      "terminal_cells": 3828,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 0.038,
-        "update": 0.022083,
-        "hydrate": 0.002125,
-        "view": 0.43854099999999996,
-        "render": 3.64125,
-        "total": 4.121666
+        "poll_wait": 12.340084,
+        "update": 0.080542,
+        "hydrate": 0.06195899999999999,
+        "view": 0.06245900000000001,
+        "render": 2.186458,
+        "total": 14.652999999999999
       }
     },
     {
       "frame": 4,
-      "title": "Messages in 'sticky-note-block-model-research (Branch)'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking > sticky-note-block-model-research (Branch)",
-      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
-      "active_id": "84cc7ca2-2111-4d93-a075-6d5684bdad1e",
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:0",
       "selected_index": 2,
-      "terminal_cells": 7788,
-      "key_code": "Down",
+      "terminal_cells": 3828,
+      "key_code": "Right",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 3.9982919999999997,
-        "update": 0.027916,
-        "hydrate": 0.001916,
-        "view": 0.433417,
-        "render": 3.693625,
-        "total": 8.129041
+        "poll_wait": 0.118416,
+        "update": 0.080667,
+        "hydrate": 0.054291,
+        "view": 0.052333000000000005,
+        "render": 1.9732920000000003,
+        "total": 2.2000420000000003
       }
     },
     {
       "frame": 5,
+      "title": "Messages in 'Study Pi's transcript/history rendering in /Users/gaborke...'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > Study Pi's transcript/history rendering in /Users/gaborke...",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 15.430584000000001,
+        "update": 0.034582999999999996,
+        "hydrate": 0.0025830000000000002,
+        "view": 0.023083,
+        "render": 3.297625,
+        "total": 18.756083
+      }
+    },
+    {
+      "frame": 6,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:0",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 11.780833,
+        "update": 0.073458,
+        "hydrate": 0.058208,
+        "view": 0.052833,
+        "render": 2.047583,
+        "total": 13.941375
+      }
+    },
+    {
+      "frame": 7,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:1",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.08679100000000001,
+        "update": 0.06887499999999999,
+        "hydrate": 0.063916,
+        "view": 0.054792,
+        "render": 2.0723339999999997,
+        "total": 2.2795419999999997
+      }
+    },
+    {
+      "frame": 8,
+      "title": "Messages in 'Study Pi's transcript/history rendering in /Users/gaborke...'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > Study Pi's transcript/history rendering in /Users/gaborke...",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 16.666666,
+        "update": 0.028374999999999997,
+        "hydrate": 0.00175,
+        "view": 0.017667,
+        "render": 3.3307089999999997,
+        "total": 20.018542
+      }
+    },
+    {
+      "frame": 9,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:1",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 10.626040999999999,
+        "update": 0.028666999999999998,
+        "hydrate": 0.058208,
+        "view": 0.056791,
+        "render": 2.06975,
+        "total": 12.812417
+      }
+    },
+    {
+      "frame": 10,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:codex:/Users/gaborkerekes/projects/transcript-browser:019d8ccb-5fe2-7761-aa84-ef3afc6fce95:0",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 10.810917,
+        "update": 0.024457999999999997,
+        "hydrate": 0.06075,
+        "view": 0.052125,
+        "render": 2.0342089999999997,
+        "total": 12.959709
+      }
+    },
+    {
+      "frame": 11,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 12.713000000000001,
+        "update": 0.080875,
+        "hydrate": 0.061917,
+        "view": 0.056375,
+        "render": 2.018833,
+        "total": 14.851958
+      }
+    },
+    {
+      "frame": 12,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d8ccb-5fe2-7761-aa84-ef3afc6fce95",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 7.8437079999999995,
+        "update": 0.026666,
+        "hydrate": 0.025582999999999998,
+        "view": 0.017082999999999997,
+        "render": 1.390792,
+        "total": 9.278959
+      }
+    },
+    {
+      "frame": 13,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 3.65875,
+        "update": 0.060709,
+        "hydrate": 0.025084,
+        "view": 0.017792,
+        "render": 1.383041,
+        "total": 5.086167
+      }
+    },
+    {
+      "frame": 14,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 5.187166,
+        "update": 5.165958,
+        "hydrate": 5.274292,
+        "view": 6.674959,
+        "render": 4.695625,
+        "total": 21.83375
+      }
+    },
+    {
+      "frame": 15,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:0",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 8.651708,
+        "update": 4.99125,
+        "hydrate": 5.021625,
+        "view": 6.534834,
+        "render": 4.617584,
+        "total": 24.827749999999998
+      }
+    },
+    {
+      "frame": 16,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 12.5475,
+        "update": 0.029124999999999998,
+        "hydrate": 0.001459,
+        "view": 0.5812919999999999,
+        "render": 3.245625,
+        "total": 16.377584
+      }
+    },
+    {
+      "frame": 17,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:0",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 8.450417,
+        "update": 5.08925,
+        "hydrate": 5.093875000000001,
+        "view": 6.432833,
+        "render": 4.564625,
+        "total": 24.543625
+      }
+    },
+    {
+      "frame": 18,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:1",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 10.853542000000001,
+        "update": 4.958291,
+        "hydrate": 5.062417,
+        "view": 6.725791,
+        "render": 4.584958,
+        "total": 27.228458
+      }
+    },
+    {
+      "frame": 19,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 13.62525,
+        "update": 0.030125,
+        "hydrate": 0.0018750000000000001,
+        "view": 0.6351249999999999,
+        "render": 3.2210419999999997,
+        "total": 17.484541
+      }
+    },
+    {
+      "frame": 20,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:1",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 6.568583,
+        "update": 5.002875,
+        "hydrate": 5.142542,
+        "view": 6.465,
+        "render": 4.319916,
+        "total": 22.497957999999997
+      }
+    },
+    {
+      "frame": 21,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:2",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 7.332083,
+        "update": 5.102709000000001,
+        "hydrate": 5.143125,
+        "view": 6.411542,
+        "render": 4.556833,
+        "total": 23.445459
+      }
+    },
+    {
+      "frame": 22,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 10.731917000000001,
+        "update": 0.038209,
+        "hydrate": 0.0018750000000000001,
+        "view": 0.553541,
+        "render": 3.4085,
+        "total": 14.697791
+      }
+    },
+    {
+      "frame": 23,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:2",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 5.102791,
+        "update": 5.08425,
+        "hydrate": 5.175541,
+        "view": 6.534916,
+        "render": 4.573917000000001,
+        "total": 21.389041000000002
+      }
+    },
+    {
+      "frame": 24,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:3",
+      "selected_index": 4,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 12.089083,
+        "update": 5.047709,
+        "hydrate": 5.179375,
+        "view": 6.722333,
+        "render": 4.71225,
+        "total": 28.70475
+      }
+    },
+    {
+      "frame": 25,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 9.432084,
+        "update": 0.029249999999999998,
+        "hydrate": 0.001917,
+        "view": 0.5507920000000001,
+        "render": 3.6909590000000003,
+        "total": 13.677625
+      }
+    },
+    {
+      "frame": 26,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:3",
+      "selected_index": 4,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 9.629666,
+        "update": 5.041666,
+        "hydrate": 5.070917000000001,
+        "view": 6.323917,
+        "render": 4.280458,
+        "total": 25.30625
+      }
+    },
+    {
+      "frame": 27,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:4",
+      "selected_index": 5,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 5.1027499999999995,
+        "update": 5.081833,
+        "hydrate": 5.03175,
+        "view": 6.530083,
+        "render": 4.464334,
+        "total": 21.131292
+      }
+    },
+    {
+      "frame": 28,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 4,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 12.587625,
+        "update": 0.027167,
+        "hydrate": 0.001625,
+        "view": 0.5362089999999999,
+        "render": 3.030541,
+        "total": 16.157542
+      }
+    },
+    {
+      "frame": 29,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:4",
+      "selected_index": 5,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 5.0734580000000005,
+        "update": 5.050292,
+        "hydrate": 5.245541,
+        "view": 6.446750000000001,
+        "render": 4.306084,
+        "total": 21.074084
+      }
+    },
+    {
+      "frame": 30,
+      "title": "Messages in 'dump-screen'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser > dump-screen",
+      "filter_text": "Filter: All Providers [F to cycle] | [↑/↓] Scroll transcript",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 4,
+      "terminal_cells": 3828,
+      "key_code": "Left",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 12.959334,
+        "update": 0.032541,
+        "hydrate": 0.000917,
+        "view": 0.554541,
+        "render": 2.9073749999999996,
+        "total": 16.4225
+      }
+    },
+    {
+      "frame": 31,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:4",
+      "selected_index": 5,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 2.093375,
+        "update": 0.028875,
+        "hydrate": 5.328792,
+        "view": 6.35925,
+        "render": 4.411291,
+        "total": 18.194499999999998
+      }
+    },
+    {
+      "frame": 32,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:3",
+      "selected_index": 4,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 4.095,
+        "update": 0.02275,
+        "hydrate": 5.154208000000001,
+        "view": 6.774916,
+        "render": 4.5945,
+        "total": 20.621000000000002
+      }
+    },
+    {
+      "frame": 33,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:2",
+      "selected_index": 3,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 14.250957999999999,
+        "update": 0.023,
+        "hydrate": 5.283917,
+        "view": 6.734166,
+        "render": 4.319584,
+        "total": 30.590875
+      }
+    },
+    {
+      "frame": 34,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:1",
+      "selected_index": 2,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 1.886167,
+        "update": 0.02675,
+        "hydrate": 5.270375,
+        "view": 6.859875,
+        "render": 4.656917,
+        "total": 18.675834
+      }
+    },
+    {
+      "frame": 35,
       "title": "Workspaces",
       "breadcrumb": "Workspaces",
       "filter_text": "Filter: All Providers [F to cycle]",
       "active_id": null,
       "selected_index": 0,
-      "terminal_cells": 7788,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 7.451499999999999,
+        "update": 0.034084,
+        "hydrate": 0.000583,
+        "view": 0.016125,
+        "render": 3.2155,
+        "total": 10.68575
+      }
+    },
+    {
+      "frame": 36,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Right",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 9.403833,
+        "update": 0.049125,
+        "hydrate": 0.028333,
+        "view": 0.0165,
+        "render": 1.6477499999999998,
+        "total": 11.098749999999999
+      }
+    },
+    {
+      "frame": 37,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 15.017166,
+        "update": 5.195250000000001,
+        "hydrate": 5.2379999999999995,
+        "view": 6.838291,
+        "render": 4.5366670000000004,
+        "total": 31.632374999999996
+      }
+    },
+    {
+      "frame": 38,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:0",
+      "selected_index": 1,
+      "terminal_cells": 3828,
+      "key_code": "Up",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 16.798582999999997,
+        "update": 0.028666999999999998,
+        "hydrate": 5.235458,
+        "view": 6.718584,
+        "render": 4.701042,
+        "total": 33.456125
+      }
+    },
+    {
+      "frame": 39,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
+      "selected_index": 0,
+      "terminal_cells": 3828,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 5.15925,
+        "update": 5.134917,
+        "hydrate": 5.133459,
+        "view": 6.481125,
+        "render": 4.4403749999999995,
+        "total": 21.21675
+      }
+    },
+    {
+      "frame": 40,
+      "title": "Conversations in '~/projects/transcript-browser'",
+      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "entry:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:codex:/Users/gaborkerekes/projects/transcript-browser:019d1607-28db-7f43-b286-d9a76f4291ad:0",
+      "selected_index": 1,
+      "terminal_cells": 3828,
       "key_code": "q",
       "input_outcome": "quit",
       "durations_ms": {
-        "poll_wait": 4.000916,
+        "poll_wait": 0.018667,
         "update": 0.0,
-        "hydrate": 0.000542,
-        "view": 0.014208,
-        "render": 4.426584,
-        "total": 8.444541999999998
+        "hydrate": 5.0748750000000005,
+        "view": 6.498666,
+        "render": 4.662083,
+        "total": 16.256666
       }
     }
   ]

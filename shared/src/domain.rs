@@ -95,6 +95,8 @@ pub enum ConversationLoadRef {
 pub struct Conversation {
     pub id: String,
     pub external_id: Option<String>,
+    pub branch_parent_id: Option<String>,
+    pub branch_anchor_message_id: Option<String>,
     pub title: Option<String>,
     pub preview: Option<String>,
     pub provider: ProviderKind,
@@ -199,6 +201,8 @@ mod tests {
         let conversation = Conversation {
             id: "conv-1".into(),
             external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
             title: None,
             preview: None,
             provider: ProviderKind::Codex,
@@ -222,6 +226,8 @@ mod tests {
         let conversation = Conversation {
             id: "conv-1".into(),
             external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
             title: None,
             preview: None,
             provider: ProviderKind::ClaudeCode,

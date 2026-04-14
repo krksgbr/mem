@@ -2,6 +2,7 @@ use crate::{Conversation, Message, MessageKind, ProviderKind, Workspace};
 use crux_core::{App, Command};
 use crux_macros::effect;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MessagePreview {
@@ -25,12 +26,25 @@ pub struct ConversationPreview {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct TreeRowPreview {
+    pub id: String,
+    pub label: String,
+    pub secondary: Option<String>,
+    pub depth: usize,
+    pub is_selected: bool,
+    pub is_expandable: bool,
+    pub is_expanded: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum ViewContent {
     Table {
         headers: Vec<String>,
         rows: Vec<Vec<String>>,
     },
     List(Vec<String>),
+    TreeList(Vec<TreeRowPreview>),
+    HistoryList(Vec<MessagePreview>),
     MessagesList(Vec<MessagePreview>),
     Split {
         conversations: Vec<ConversationPreview>,
@@ -38,7 +52,7 @@ pub enum ViewContent {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum LayoutMode {
     Table,
     Split,
@@ -57,11 +71,6 @@ pub struct MessageSelectionState {
 }
 
 impl MessageSelectionState {
-    fn reset(&mut self) {
-        self.focused_message_idx = 0;
-        self.expanded_messages.clear();
-    }
-
     fn move_up(&mut self) {
         if self.focused_message_idx > 0 {
             self.focused_message_idx -= 1;
@@ -94,15 +103,15 @@ pub enum Screen {
     },
     Conversations {
         workspace_idx: usize,
-        selected_conversation: usize,
-        expanded_conversations: Vec<usize>,
-        layout_mode: LayoutMode,
-        preview_state: MessageSelectionState,
+        selected_row: usize,
+        expanded_ids: Vec<String>,
     },
     Messages {
         workspace_idx: usize,
         conv_idx: usize,
         message_state: MessageSelectionState,
+        return_selected_row: usize,
+        return_expanded_ids: Vec<String>,
     },
 }
 
@@ -163,7 +172,29 @@ pub struct ViewModel {
 #[effect]
 pub enum Effect {}
 
-fn format_relative_time(timestamp_ms: i64, now_ms: i64) -> String {
+#[derive(Clone, Copy)]
+enum BrowserNode<'a> {
+    Conversation {
+        conv_idx: usize,
+        conversation: &'a Conversation,
+    },
+    Entry {
+        conv_idx: usize,
+        conversation: &'a Conversation,
+        message_idx: usize,
+        message: &'a Message,
+    },
+}
+
+#[derive(Clone, Copy)]
+struct BrowserTreeRow<'a> {
+    depth: usize,
+    node: BrowserNode<'a>,
+    is_expandable: bool,
+    is_expanded: bool,
+}
+
+pub fn format_relative_time(timestamp_ms: i64, now_ms: i64) -> String {
     if timestamp_ms == 0 {
         return "N/A".to_string();
     }
@@ -212,11 +243,41 @@ fn clamp_selection(selected: usize, len: usize) -> usize {
     }
 }
 
-#[derive(Clone, Copy)]
-struct ConversationTableRow<'a> {
-    actual_conv_idx: usize,
-    conversation: &'a Conversation,
-    segment_idx: Option<usize>,
+fn first_non_empty_line(message: &Message) -> Option<&str> {
+    message
+        .content
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+}
+
+fn browser_conversation_row_id(conversation_id: &str) -> String {
+    format!("conv:{conversation_id}")
+}
+
+fn browser_entry_row_id(
+    conversation_id: &str,
+    message_idx: usize,
+    message_id: Option<&str>,
+) -> String {
+    match message_id {
+        Some(id) => format!("entry:{conversation_id}:{id}"),
+        None => format!("entry:{conversation_id}:{message_idx}"),
+    }
+}
+
+fn message_kind_label(kind: MessageKind) -> &'static str {
+    match kind {
+        MessageKind::UserMessage => "You",
+        MessageKind::AssistantMessage => "Assistant",
+        MessageKind::ToolCall => "Tool Call",
+        MessageKind::ToolResult => "Tool Result",
+        MessageKind::Thinking => "Thinking",
+        MessageKind::Summary => "Summary",
+        MessageKind::Compaction => "Compaction",
+        MessageKind::Label => "Label",
+        MessageKind::MetadataChange => "Metadata",
+    }
 }
 
 impl TranscriptBrowser {
@@ -236,84 +297,346 @@ impl TranscriptBrowser {
             .collect()
     }
 
-    fn visible_conversation_count(&self, model: &Model, workspace_idx: usize) -> usize {
-        self.filtered_conversations(&model.workspaces[workspace_idx], &model.provider_filter)
-            .len()
-    }
-
-    fn visible_conversation_row_count(
+    fn browser_rows<'a>(
         &self,
-        model: &Model,
+        model: &'a Model,
         workspace_idx: usize,
-        expanded_conversations: &[usize],
-    ) -> usize {
-        self.visible_conversation_rows(
-            &model.workspaces[workspace_idx],
-            &model.provider_filter,
-            expanded_conversations,
-        )
-        .len()
-    }
+        expanded_ids: &[String],
+    ) -> Vec<BrowserTreeRow<'a>> {
+        let workspace = &model.workspaces[workspace_idx];
+        let conversations = self.filtered_conversations(workspace, &model.provider_filter);
+        let visible_ids = conversations
+            .iter()
+            .map(|(_, conversation)| conversation.id.as_str())
+            .collect::<HashSet<_>>();
+        let mut children_by_parent: HashMap<Option<&str>, Vec<(usize, &'a Conversation)>> =
+            HashMap::new();
+        let mut children_by_anchor: HashMap<(&str, &str), Vec<(usize, &'a Conversation)>> =
+            HashMap::new();
 
-    fn visible_conversation_rows<'a>(
-        &self,
-        workspace: &'a Workspace,
-        filter: &Option<ProviderKind>,
-        expanded_conversations: &[usize],
-    ) -> Vec<ConversationTableRow<'a>> {
+        for (conv_idx, conversation) in conversations.iter().copied() {
+            let parent = conversation
+                .branch_parent_id
+                .as_deref()
+                .filter(|parent_id| visible_ids.contains(parent_id));
+            if let (Some(parent_id), Some(anchor_id)) =
+                (parent, conversation.branch_anchor_message_id.as_deref())
+            {
+                children_by_anchor
+                    .entry((parent_id, anchor_id))
+                    .or_default()
+                    .push((conv_idx, conversation));
+            } else {
+                children_by_parent
+                    .entry(parent)
+                    .or_default()
+                    .push((conv_idx, conversation));
+            }
+        }
+
         let mut rows = Vec::new();
-
-        for (actual_conv_idx, conversation) in self.filtered_conversations(workspace, filter) {
-            rows.push(ConversationTableRow {
-                actual_conv_idx,
-                conversation,
-                segment_idx: None,
-            });
-
-            if expanded_conversations.contains(&actual_conv_idx) {
-                for segment_idx in 0..conversation.segments.len() {
-                    rows.push(ConversationTableRow {
-                        actual_conv_idx,
-                        conversation,
-                        segment_idx: Some(segment_idx),
-                    });
-                }
+        if let Some(roots) = children_by_parent.get(&None) {
+            for (conv_idx, conversation) in roots.iter().copied() {
+                self.push_conversation_rows(
+                    conv_idx,
+                    conversation,
+                    0,
+                    expanded_ids,
+                    &children_by_parent,
+                    &children_by_anchor,
+                    &mut rows,
+                );
             }
         }
 
         rows
     }
 
-    fn selected_conversation_table_row<'a>(
+    fn push_conversation_rows<'a>(
+        &self,
+        conv_idx: usize,
+        conversation: &'a Conversation,
+        depth: usize,
+        expanded_ids: &[String],
+        children_by_parent: &HashMap<Option<&'a str>, Vec<(usize, &'a Conversation)>>,
+        children_by_anchor: &HashMap<(&'a str, &'a str), Vec<(usize, &'a Conversation)>>,
+        rows: &mut Vec<BrowserTreeRow<'a>>,
+    ) {
+        let conv_node_id = browser_conversation_row_id(&conversation.id);
+        let conv_is_expanded = expanded_ids.iter().any(|id| id == &conv_node_id);
+        let child_conversations = children_by_parent
+            .get(&Some(conversation.id.as_str()))
+            .cloned()
+            .unwrap_or_default();
+
+        rows.push(BrowserTreeRow {
+            depth,
+            node: BrowserNode::Conversation {
+                conv_idx,
+                conversation,
+            },
+            is_expandable: (conversation.has_loaded_messages()
+                && !conversation.messages.is_empty())
+                || !child_conversations.is_empty(),
+            is_expanded: conv_is_expanded,
+        });
+
+        if !conv_is_expanded {
+            return;
+        }
+
+        if conversation.has_loaded_messages() {
+            self.push_entry_rows(
+                conversation,
+                conv_idx,
+                expanded_ids,
+                depth + 1,
+                children_by_parent,
+                children_by_anchor,
+                rows,
+            );
+        }
+
+        for (child_idx, child_conversation) in child_conversations {
+            self.push_conversation_rows(
+                child_idx,
+                child_conversation,
+                depth + 1,
+                expanded_ids,
+                children_by_parent,
+                children_by_anchor,
+                rows,
+            );
+        }
+    }
+
+    fn push_entry_rows<'a>(
+        &self,
+        conversation: &'a Conversation,
+        conv_idx: usize,
+        expanded_ids: &[String],
+        base_depth: usize,
+        conversation_children_by_parent: &HashMap<Option<&'a str>, Vec<(usize, &'a Conversation)>>,
+        conversation_children_by_anchor: &HashMap<
+            (&'a str, &'a str),
+            Vec<(usize, &'a Conversation)>,
+        >,
+        rows: &mut Vec<BrowserTreeRow<'a>>,
+    ) {
+        let mut message_ids = HashSet::new();
+        for message in &conversation.messages {
+            if let Some(id) = message.id.as_deref() {
+                message_ids.insert(id.to_string());
+            }
+        }
+
+        let mut children_by_parent: HashMap<Option<String>, Vec<usize>> = HashMap::new();
+        let mut root_indices = Vec::new();
+
+        for (idx, message) in conversation.messages.iter().enumerate() {
+            let has_known_parent = message
+                .parent_id
+                .as_deref()
+                .map(|id| id != message.id.as_deref().unwrap_or("") && message_ids.contains(id))
+                .unwrap_or(false);
+
+            let is_structural_child = message.depth > 0 && has_known_parent;
+
+            if is_structural_child {
+                children_by_parent
+                    .entry(message.parent_id.clone())
+                    .or_default()
+                    .push(idx);
+            } else {
+                root_indices.push(idx);
+            }
+        }
+
+        let mut visited = HashSet::new();
+        for root_idx in root_indices {
+            self.push_entry_subtree(
+                conversation,
+                conv_idx,
+                root_idx,
+                base_depth,
+                expanded_ids,
+                &children_by_parent,
+                conversation_children_by_parent,
+                conversation_children_by_anchor,
+                &mut visited,
+                rows,
+            );
+        }
+
+        for idx in 0..conversation.messages.len() {
+            if !visited.contains(&idx) {
+                self.push_entry_subtree(
+                    conversation,
+                    conv_idx,
+                    idx,
+                    base_depth,
+                    expanded_ids,
+                    &children_by_parent,
+                    conversation_children_by_parent,
+                    conversation_children_by_anchor,
+                    &mut visited,
+                    rows,
+                );
+            }
+        }
+    }
+
+    fn push_entry_subtree<'a>(
+        &self,
+        conversation: &'a Conversation,
+        conv_idx: usize,
+        message_idx: usize,
+        depth: usize,
+        expanded_ids: &[String],
+        children_by_parent: &HashMap<Option<String>, Vec<usize>>,
+        conversation_children_by_parent: &HashMap<Option<&'a str>, Vec<(usize, &'a Conversation)>>,
+        conversation_children_by_anchor: &HashMap<
+            (&'a str, &'a str),
+            Vec<(usize, &'a Conversation)>,
+        >,
+        visited: &mut HashSet<usize>,
+        rows: &mut Vec<BrowserTreeRow<'a>>,
+    ) {
+        if !visited.insert(message_idx) {
+            return;
+        }
+
+        let message = &conversation.messages[message_idx];
+        let node_id = browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref());
+        let child_indices = children_by_parent
+            .get(&message.id)
+            .cloned()
+            .unwrap_or_default();
+        let branch_children = message
+            .id
+            .as_deref()
+            .and_then(|message_id| {
+                conversation_children_by_anchor.get(&(conversation.id.as_str(), message_id))
+            })
+            .cloned()
+            .unwrap_or_default();
+        let is_expanded = expanded_ids.iter().any(|id| id == &node_id);
+
+        rows.push(BrowserTreeRow {
+            depth,
+            node: BrowserNode::Entry {
+                conv_idx,
+                conversation,
+                message_idx,
+                message,
+            },
+            is_expandable: !child_indices.is_empty() || !branch_children.is_empty(),
+            is_expanded,
+        });
+
+        for (child_idx, child_conversation) in branch_children.iter().copied() {
+            self.push_conversation_rows(
+                child_idx,
+                child_conversation,
+                depth + 1,
+                expanded_ids,
+                conversation_children_by_parent,
+                conversation_children_by_anchor,
+                rows,
+            );
+        }
+
+        if is_expanded {
+            for child_idx in child_indices {
+                self.push_entry_subtree(
+                    conversation,
+                    conv_idx,
+                    child_idx,
+                    depth + 1,
+                    expanded_ids,
+                    children_by_parent,
+                    conversation_children_by_parent,
+                    conversation_children_by_anchor,
+                    visited,
+                    rows,
+                );
+            }
+        }
+    }
+
+    fn browser_row_view(
+        &self,
+        row: BrowserTreeRow<'_>,
+        is_selected: bool,
+        current_time: i64,
+    ) -> TreeRowPreview {
+        match row.node {
+            BrowserNode::Conversation { conversation, .. } => TreeRowPreview {
+                id: browser_conversation_row_id(&conversation.id),
+                label: conversation.display_title(),
+                secondary: Some(format!(
+                    "{} {}",
+                    conversation.provider,
+                    format_relative_time(conversation.updated_at, current_time)
+                )),
+                depth: row.depth,
+                is_selected,
+                is_expandable: row.is_expandable,
+                is_expanded: row.is_expanded,
+            },
+            BrowserNode::Entry {
+                message,
+                message_idx,
+                conversation,
+                ..
+            } => {
+                let label = first_non_empty_line(message)
+                    .map(ToOwned::to_owned)
+                    .unwrap_or_else(|| message_kind_label(message.kind).to_string());
+
+                let secondary = Some(match message.timestamp {
+                    Some(timestamp) => format!(
+                        "{} {}",
+                        message.participant.label(),
+                        format_relative_time(timestamp, current_time)
+                    ),
+                    None => message.participant.label(),
+                });
+
+                TreeRowPreview {
+                    id: browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref()),
+                    label,
+                    secondary,
+                    depth: row.depth,
+                    is_selected,
+                    is_expandable: row.is_expandable,
+                    is_expanded: row.is_expanded,
+                }
+            }
+        }
+    }
+
+    fn selected_browser_row<'a>(
         &self,
         model: &'a Model,
         workspace_idx: usize,
         selected_row: usize,
-        expanded_conversations: &[usize],
-    ) -> Option<ConversationTableRow<'a>> {
-        let rows = self.visible_conversation_rows(
-            &model.workspaces[workspace_idx],
-            &model.provider_filter,
-            expanded_conversations,
-        );
+        expanded_ids: &[String],
+    ) -> Option<BrowserTreeRow<'a>> {
+        let rows = self.browser_rows(model, workspace_idx, expanded_ids);
         rows.get(clamp_selection(selected_row, rows.len())).copied()
     }
 
-    fn visible_message_count_for_selected_conversation(
+    fn root_row_index_for_conversation(
         &self,
         model: &Model,
         workspace_idx: usize,
-        selected_row: usize,
-        expanded_conversations: &[usize],
+        conv_idx: usize,
     ) -> usize {
-        self.selected_conversation_table_row(
-            model,
-            workspace_idx,
-            selected_row,
-            expanded_conversations,
-        )
-        .map(|row| row.conversation.messages.len())
-        .unwrap_or(0)
+        let rows = self.browser_rows(model, workspace_idx, &[]);
+        rows.iter()
+            .position(|row| matches!(row.node, BrowserNode::Conversation { conv_idx: row_conv_idx, .. } if row_conv_idx == conv_idx))
+            .unwrap_or(0)
     }
 
     fn apply_filter_change(&self, model: &mut Model) {
@@ -322,52 +645,31 @@ impl TranscriptBrowser {
             Screen::Workspaces { .. } => {}
             Screen::Conversations {
                 workspace_idx,
-                selected_conversation,
-                expanded_conversations,
-                layout_mode,
-                ..
+                selected_row,
+                expanded_ids,
             } => {
-                let count = if layout_mode == LayoutMode::Table {
-                    self.visible_conversation_row_count(
-                        model,
-                        workspace_idx,
-                        &expanded_conversations,
-                    )
-                } else {
-                    self.visible_conversation_count(model, workspace_idx)
-                };
+                let count = self.browser_rows(model, workspace_idx, &expanded_ids).len();
                 model.screen = Screen::Conversations {
                     workspace_idx,
-                    selected_conversation: clamp_selection(selected_conversation, count),
-                    expanded_conversations,
-                    layout_mode,
-                    preview_state: MessageSelectionState::default(),
+                    selected_row: clamp_selection(selected_row, count),
+                    expanded_ids,
                 };
             }
             Screen::Messages {
                 workspace_idx,
                 conv_idx,
+                return_expanded_ids,
                 ..
             } => {
-                let workspace = &model.workspaces[workspace_idx];
-                let filtered = self.filtered_conversations(workspace, &model.provider_filter);
-                if let Some(pos) = filtered.iter().position(|(idx, _)| *idx == conv_idx) {
-                    model.screen = Screen::Conversations {
+                model.screen = Screen::Conversations {
+                    workspace_idx,
+                    selected_row: self.root_row_index_for_conversation(
+                        model,
                         workspace_idx,
-                        selected_conversation: pos,
-                        expanded_conversations: Vec::new(),
-                        layout_mode: LayoutMode::Table,
-                        preview_state: MessageSelectionState::default(),
-                    };
-                } else {
-                    model.screen = Screen::Conversations {
-                        workspace_idx,
-                        selected_conversation: 0,
-                        expanded_conversations: Vec::new(),
-                        layout_mode: LayoutMode::Table,
-                        preview_state: MessageSelectionState::default(),
-                    };
-                }
+                        conv_idx,
+                    ),
+                    expanded_ids: return_expanded_ids,
+                };
             }
         }
     }
@@ -396,6 +698,28 @@ impl TranscriptBrowser {
     }
 }
 
+pub fn visible_conversation_target(model: &Model) -> Option<(usize, usize)> {
+    let app = TranscriptBrowser;
+    match &model.screen {
+        Screen::Conversations {
+            workspace_idx,
+            selected_row,
+            expanded_ids,
+        } => app
+            .selected_browser_row(model, *workspace_idx, *selected_row, expanded_ids)
+            .map(|row| match row.node {
+                BrowserNode::Conversation { conv_idx, .. } => (*workspace_idx, conv_idx),
+                BrowserNode::Entry { conv_idx, .. } => (*workspace_idx, conv_idx),
+            }),
+        Screen::Messages {
+            workspace_idx,
+            conv_idx,
+            ..
+        } => Some((*workspace_idx, *conv_idx)),
+        Screen::Workspaces { .. } => None,
+    }
+}
+
 impl App for TranscriptBrowser {
     type Event = Event;
     type Model = Model;
@@ -416,14 +740,9 @@ impl App for TranscriptBrowser {
                         *selected_workspace -= 1;
                     }
                 }
-                Screen::Conversations {
-                    selected_conversation,
-                    preview_state,
-                    ..
-                } => {
-                    if *selected_conversation > 0 {
-                        *selected_conversation -= 1;
-                        preview_state.reset();
+                Screen::Conversations { selected_row, .. } => {
+                    if *selected_row > 0 {
+                        *selected_row -= 1;
                     }
                 }
                 Screen::Messages { .. } => {}
@@ -439,162 +758,100 @@ impl App for TranscriptBrowser {
                 }
                 Screen::Conversations {
                     workspace_idx,
-                    selected_conversation,
-                    expanded_conversations,
-                    layout_mode,
-                    preview_state,
+                    selected_row,
+                    expanded_ids,
                 } => {
-                    let max_len = if layout_mode == LayoutMode::Table {
-                        self.visible_conversation_row_count(
-                            model,
-                            workspace_idx,
-                            &expanded_conversations,
-                        )
-                    } else {
-                        self.visible_conversation_count(model, workspace_idx)
-                    };
-                    if max_len > 0 && selected_conversation + 1 < max_len {
+                    let max_len = self.browser_rows(model, workspace_idx, &expanded_ids).len();
+                    if max_len > 0 && selected_row + 1 < max_len {
                         model.screen = Screen::Conversations {
                             workspace_idx,
-                            selected_conversation: selected_conversation + 1,
-                            expanded_conversations,
-                            layout_mode,
-                            preview_state: MessageSelectionState::default(),
-                        };
-                    } else {
-                        model.screen = Screen::Conversations {
-                            workspace_idx,
-                            selected_conversation,
-                            expanded_conversations,
-                            layout_mode,
-                            preview_state,
+                            selected_row: selected_row + 1,
+                            expanded_ids,
                         };
                     }
                 }
                 Screen::Messages { .. } => {}
             },
             Event::MessageUp => match &mut model.screen {
-                Screen::Conversations { preview_state, .. } => preview_state.move_up(),
                 Screen::Messages { message_state, .. } => message_state.move_up(),
-                Screen::Workspaces { .. } => {}
+                Screen::Workspaces { .. } | Screen::Conversations { .. } => {}
             },
             Event::MessageDown => match model.screen.clone() {
-                Screen::Conversations {
-                    workspace_idx,
-                    selected_conversation,
-                    expanded_conversations,
-                    layout_mode,
-                    preview_state,
-                } => {
-                    let max_messages = self.visible_message_count_for_selected_conversation(
-                        model,
-                        workspace_idx,
-                        selected_conversation,
-                        &expanded_conversations,
-                    );
-                    let mut next_preview_state = preview_state;
-                    next_preview_state.move_down(max_messages);
-                    model.screen = Screen::Conversations {
-                        workspace_idx,
-                        selected_conversation,
-                        expanded_conversations,
-                        layout_mode,
-                        preview_state: next_preview_state,
-                    };
-                }
                 Screen::Messages {
                     workspace_idx,
                     conv_idx,
-                    message_state,
+                    mut message_state,
+                    return_selected_row,
+                    return_expanded_ids,
                 } => {
                     let max_messages = model.workspaces[workspace_idx].conversations[conv_idx]
                         .messages
                         .len();
-                    let mut next_message_state = message_state;
-                    next_message_state.move_down(max_messages);
+                    message_state.move_down(max_messages);
                     model.screen = Screen::Messages {
                         workspace_idx,
                         conv_idx,
-                        message_state: next_message_state,
+                        message_state,
+                        return_selected_row,
+                        return_expanded_ids,
                     };
                 }
-                Screen::Workspaces { .. } => {}
+                Screen::Workspaces { .. } | Screen::Conversations { .. } => {}
             },
             Event::ToggleMessage => match model.screen.clone() {
                 Screen::Conversations {
                     workspace_idx,
-                    selected_conversation,
-                    mut expanded_conversations,
-                    layout_mode,
-                    mut preview_state,
+                    selected_row,
+                    mut expanded_ids,
                 } => {
-                    if layout_mode == LayoutMode::Table {
-                        let mut next_selected = selected_conversation;
-                        if let Some(row) = self.selected_conversation_table_row(
-                            model,
-                            workspace_idx,
-                            selected_conversation,
-                            &expanded_conversations,
-                        ) {
-                            if row.segment_idx.is_some() {
-                                if let Some(pos) = expanded_conversations
-                                    .iter()
-                                    .position(|idx| *idx == row.actual_conv_idx)
-                                {
-                                    expanded_conversations.remove(pos);
-                                }
+                    if let Some(row) =
+                        self.selected_browser_row(model, workspace_idx, selected_row, &expanded_ids)
+                    {
+                        let toggle_id = match row.node {
+                            BrowserNode::Conversation { conversation, .. } => {
+                                browser_conversation_row_id(&conversation.id)
+                            }
+                            BrowserNode::Entry {
+                                conversation,
+                                message_idx,
+                                message,
+                                ..
+                            } => browser_entry_row_id(
+                                &conversation.id,
+                                message_idx,
+                                message.id.as_deref(),
+                            ),
+                        };
 
-                                let rows = self.visible_conversation_rows(
-                                    &model.workspaces[workspace_idx],
-                                    &model.provider_filter,
-                                    &expanded_conversations,
-                                );
-                                if let Some(parent_row_idx) = rows.iter().position(|candidate| {
-                                    candidate.actual_conv_idx == row.actual_conv_idx
-                                        && candidate.segment_idx.is_none()
-                                }) {
-                                    next_selected = parent_row_idx;
-                                }
-                            } else if row.conversation.has_segments() {
-                                if let Some(pos) = expanded_conversations
-                                    .iter()
-                                    .position(|idx| *idx == row.actual_conv_idx)
-                                {
-                                    expanded_conversations.remove(pos);
-                                } else {
-                                    expanded_conversations.push(row.actual_conv_idx);
-                                }
+                        if row.is_expandable {
+                            if let Some(pos) = expanded_ids.iter().position(|id| id == &toggle_id) {
+                                expanded_ids.remove(pos);
+                            } else {
+                                expanded_ids.push(toggle_id);
                             }
                         }
-
-                        model.screen = Screen::Conversations {
-                            workspace_idx,
-                            selected_conversation: next_selected,
-                            expanded_conversations,
-                            layout_mode,
-                            preview_state,
-                        };
-                    } else {
-                        preview_state.toggle_current();
-                        model.screen = Screen::Conversations {
-                            workspace_idx,
-                            selected_conversation,
-                            expanded_conversations,
-                            layout_mode,
-                            preview_state,
-                        };
                     }
+
+                    model.screen = Screen::Conversations {
+                        workspace_idx,
+                        selected_row,
+                        expanded_ids,
+                    };
                 }
                 Screen::Messages {
                     workspace_idx,
                     conv_idx,
                     mut message_state,
+                    return_selected_row,
+                    return_expanded_ids,
                 } => {
                     message_state.toggle_current();
                     model.screen = Screen::Messages {
                         workspace_idx,
                         conv_idx,
                         message_state,
+                        return_selected_row,
+                        return_expanded_ids,
                     };
                 }
                 Screen::Workspaces { .. } => {}
@@ -606,54 +863,41 @@ impl App for TranscriptBrowser {
                         if !model.workspaces.is_empty() {
                             model.screen = Screen::Conversations {
                                 workspace_idx: selected_workspace,
-                                selected_conversation: 0,
-                                expanded_conversations: Vec::new(),
-                                layout_mode: LayoutMode::Table,
-                                preview_state: MessageSelectionState::default(),
+                                selected_row: 0,
+                                expanded_ids: Vec::new(),
                             };
                         }
                     }
                     Screen::Conversations {
                         workspace_idx,
-                        selected_conversation,
-                        expanded_conversations,
-                        layout_mode,
-                        ..
+                        selected_row,
+                        expanded_ids,
                     } => {
-                        if layout_mode == LayoutMode::Table {
-                            if let Some(row) = self.selected_conversation_table_row(
-                                model,
+                        if let Some(row) = self.selected_browser_row(
+                            model,
+                            workspace_idx,
+                            selected_row,
+                            &expanded_ids,
+                        ) {
+                            let (conv_idx, focused_message_idx) = match row.node {
+                                BrowserNode::Conversation { conv_idx, .. } => (conv_idx, 0),
+                                BrowserNode::Entry {
+                                    conv_idx,
+                                    message_idx,
+                                    ..
+                                } => (conv_idx, message_idx),
+                            };
+
+                            model.screen = Screen::Messages {
                                 workspace_idx,
-                                selected_conversation,
-                                &expanded_conversations,
-                            ) {
-                                let message_state = MessageSelectionState {
-                                    focused_message_idx: row
-                                        .segment_idx
-                                        .map(|segment_idx| {
-                                            row.conversation.segments[segment_idx].message_start_idx
-                                        })
-                                        .unwrap_or(0),
-                                    ..Default::default()
-                                };
-                                model.screen = Screen::Messages {
-                                    workspace_idx,
-                                    conv_idx: row.actual_conv_idx,
-                                    message_state,
-                                };
-                            }
-                        } else {
-                            let workspace = &model.workspaces[workspace_idx];
-                            let filtered =
-                                self.filtered_conversations(workspace, &model.provider_filter);
-                            if let Some((actual_conv_idx, _)) = filtered.get(selected_conversation)
-                            {
-                                model.screen = Screen::Messages {
-                                    workspace_idx,
-                                    conv_idx: *actual_conv_idx,
-                                    message_state: MessageSelectionState::default(),
-                                };
-                            }
+                                conv_idx,
+                                message_state: MessageSelectionState {
+                                    focused_message_idx,
+                                    expanded_messages: Vec::new(),
+                                },
+                                return_selected_row: selected_row,
+                                return_expanded_ids: expanded_ids,
+                            };
                         }
                     }
                     Screen::Messages { .. } => {}
@@ -670,22 +914,14 @@ impl App for TranscriptBrowser {
                     }
                     Screen::Messages {
                         workspace_idx,
-                        conv_idx,
+                        return_selected_row,
+                        return_expanded_ids,
                         ..
                     } => {
-                        let workspace = &model.workspaces[workspace_idx];
-                        let filtered =
-                            self.filtered_conversations(workspace, &model.provider_filter);
-                        let selected_conversation = filtered
-                            .iter()
-                            .position(|(idx, _)| *idx == conv_idx)
-                            .unwrap_or(0);
                         model.screen = Screen::Conversations {
                             workspace_idx,
-                            selected_conversation,
-                            expanded_conversations: Vec::new(),
-                            layout_mode: LayoutMode::Table,
-                            preview_state: MessageSelectionState::default(),
+                            selected_row: return_selected_row,
+                            expanded_ids: return_expanded_ids,
                         };
                     }
                 }
@@ -698,14 +934,7 @@ impl App for TranscriptBrowser {
                 };
                 self.apply_filter_change(model);
             }
-            Event::ToggleLayout => {
-                if let Screen::Conversations { layout_mode, .. } = &mut model.screen {
-                    *layout_mode = match layout_mode {
-                        LayoutMode::Table => LayoutMode::Split,
-                        LayoutMode::Split => LayoutMode::Table,
-                    };
-                }
-            }
+            Event::ToggleLayout => {}
             Event::SetWorkspaces(workspaces, current_time) => {
                 model.workspaces = workspaces;
                 model.current_time = current_time;
@@ -747,147 +976,47 @@ impl App for TranscriptBrowser {
             },
             Screen::Conversations {
                 workspace_idx,
-                selected_conversation,
-                expanded_conversations,
-                layout_mode,
-                preview_state,
+                selected_row,
+                expanded_ids,
             } => {
                 let workspace = &model.workspaces[*workspace_idx];
-                let filtered = self.filtered_conversations(workspace, &model.provider_filter);
-                let selected_parent = if *layout_mode == LayoutMode::Table {
-                    self.selected_conversation_table_row(
-                        model,
-                        *workspace_idx,
-                        *selected_conversation,
-                        expanded_conversations,
-                    )
-                    .and_then(|row| {
-                        filtered
-                            .iter()
-                            .position(|(idx, _)| *idx == row.actual_conv_idx)
-                    })
-                    .unwrap_or(0)
-                } else {
-                    clamp_selection(*selected_conversation, filtered.len())
-                };
-
-                let headers = vec![
-                    "Conversation".into(),
-                    "Provider".into(),
-                    "First Active".into(),
-                    "Last Active".into(),
-                ];
-
-                let mut rows = Vec::new();
-
-                for (actual_idx, conversation) in filtered
+                let rows = self.browser_rows(model, *workspace_idx, expanded_ids);
+                let selected_row = clamp_selection(*selected_row, rows.len());
+                let previews = rows
                     .iter()
-                    .map(|(idx, conversation)| (idx, conversation))
-                {
-                    let title = if conversation.has_segments() {
-                        let marker = if expanded_conversations.contains(actual_idx) {
-                            "▾"
-                        } else {
-                            "▸"
-                        };
-                        format!("{marker} {}", conversation.display_title())
-                    } else {
-                        format!("  {}", conversation.display_title())
-                    };
+                    .enumerate()
+                    .map(|(idx, row)| {
+                        self.browser_row_view(*row, idx == selected_row, model.current_time)
+                    })
+                    .collect::<Vec<_>>();
 
-                    rows.push(vec![
-                        title,
-                        conversation.provider.to_string(),
-                        format_relative_time(conversation.created_at, model.current_time),
-                        format_relative_time(conversation.updated_at, model.current_time),
-                    ]);
-
-                    if expanded_conversations.contains(actual_idx) {
-                        let segment_count = conversation.segments.len();
-                        for (segment_idx, segment) in conversation.segments.iter().enumerate() {
-                            let branch = if segment_idx + 1 == segment_count {
-                                "└─"
-                            } else {
-                                "├─"
-                            };
-                            rows.push(vec![
-                                format!("  {branch} {}", segment.label),
-                                conversation.provider.to_string(),
-                                format_relative_time(segment.created_at, model.current_time),
-                                format_relative_time(segment.updated_at, model.current_time),
-                            ]);
-                        }
-                    }
-                }
-
-                let rendered_selected = if *layout_mode == LayoutMode::Table {
-                    clamp_selection(*selected_conversation, rows.len())
-                } else {
-                    selected_parent
-                };
-
-                let filter_text = format!("{} | [~] Toggle Layout", filter_text);
-                let active_id = filtered.get(selected_parent).map(|(_, conversation)| {
-                    conversation
+                let active_id = rows.get(selected_row).map(|row| match row.node {
+                    BrowserNode::Conversation { conversation, .. } => conversation
                         .external_id
                         .clone()
-                        .unwrap_or_else(|| conversation.id.clone())
+                        .unwrap_or_else(|| conversation.id.clone()),
+                    BrowserNode::Entry {
+                        conversation,
+                        message,
+                        message_idx,
+                        ..
+                    } => browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref()),
                 });
 
-                if *layout_mode == LayoutMode::Split {
-                    let right_messages = filtered
-                        .get(selected_parent)
-                        .map(|(_, conversation)| {
-                            self.message_previews(
-                                &conversation.messages,
-                                preview_state,
-                                model.current_time,
-                            )
-                        })
-                        .unwrap_or_default();
-
-                    let conversations = filtered
-                        .iter()
-                        .enumerate()
-                        .map(|(idx, (_, conversation))| ConversationPreview {
-                            id: conversation.id.clone(),
-                            title: conversation.display_title(),
-                            provider_label: conversation.provider.to_string(),
-                            relative_time: format_relative_time(
-                                conversation.updated_at,
-                                model.current_time,
-                            ),
-                            snippet: conversation.preview_line().unwrap_or_default().to_string(),
-                            is_selected: idx == selected_parent,
-                        })
-                        .collect();
-
-                    ViewModel {
-                        title: format!("Conversations in '{}'", workspace.display_name),
-                        breadcrumb: format!("Workspaces > {}", workspace.display_name),
-                        active_id: active_id.clone(),
-                        content: ViewContent::Split {
-                            conversations,
-                            right_messages,
-                        },
-                        selected_index: selected_parent,
-                        filter_text,
-                    }
-                } else {
-                    ViewModel {
-                        title: format!("Conversations in '{}'", workspace.display_name),
-                        breadcrumb: format!("Workspaces > {}", workspace.display_name),
-                        active_id,
-                        content: ViewContent::Table { headers, rows },
-                        selected_index: rendered_selected,
-                        filter_text,
-                    }
+                ViewModel {
+                    title: format!("Conversations in '{}'", workspace.display_name),
+                    breadcrumb: format!("Workspaces > {}", workspace.display_name),
+                    active_id,
+                    content: ViewContent::TreeList(previews),
+                    selected_index: selected_row,
+                    filter_text: format!("{filter_text} | [e/l] Expand  [Enter] Read"),
                 }
             }
             Screen::Messages {
                 workspace_idx,
                 conv_idx,
                 message_state,
+                ..
             } => {
                 let workspace = &model.workspaces[*workspace_idx];
                 let conversation = &workspace.conversations[*conv_idx];
@@ -925,7 +1054,7 @@ impl App for TranscriptBrowser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ConversationSegment, MessageKind, Participant};
+    use crate::Participant;
     use crux_core::testing::AppTester;
 
     fn sample_message(content: &str) -> Message {
@@ -941,37 +1070,7 @@ mod tests {
         }
     }
 
-    fn sample_conversation(id: &str, provider: ProviderKind, content: &str) -> Conversation {
-        Conversation {
-            id: id.into(),
-            external_id: None,
-            title: None,
-            preview: Some(content.into()),
-            provider,
-            created_at: 1000,
-            updated_at: 1000,
-            segments: vec![],
-            messages: vec![sample_message(content)],
-            is_hydrated: true,
-            load_ref: None,
-        }
-    }
-
     fn sample_workspace() -> Workspace {
-        Workspace {
-            id: "workspace-1".into(),
-            display_name: "Test Workspace".into(),
-            source_path: Some("~/test".into()),
-            updated_at: 1000,
-            conversations: vec![sample_conversation(
-                "conv-1",
-                ProviderKind::ClaudeCode,
-                "Hello",
-            )],
-        }
-    }
-
-    fn segmented_workspace() -> Workspace {
         Workspace {
             id: "workspace-1".into(),
             display_name: "Test Workspace".into(),
@@ -979,39 +1078,162 @@ mod tests {
             updated_at: 1000,
             conversations: vec![Conversation {
                 id: "conv-1".into(),
-                external_id: None,
-                title: Some("dump-screen".into()),
+                external_id: Some("provider-conv-1".into()),
+                branch_parent_id: None,
+                branch_anchor_message_id: None,
+                title: Some("Hello".into()),
                 preview: Some("hello".into()),
-                provider: ProviderKind::Codex,
+                provider: ProviderKind::ClaudeCode,
                 created_at: 1000,
                 updated_at: 1000,
-                segments: vec![
-                    ConversationSegment {
-                        id: "seg-1".into(),
-                        label: "main session".into(),
-                        created_at: 1000,
-                        updated_at: 1000,
-                        message_start_idx: 0,
-                        message_count: 1,
-                    },
-                    ConversationSegment {
-                        id: "seg-2".into(),
-                        label: "rollout 019d1665...".into(),
-                        created_at: 1100,
-                        updated_at: 1200,
-                        message_start_idx: 1,
-                        message_count: 1,
-                    },
-                ],
-                messages: vec![sample_message("hello"), sample_message("world")],
+                segments: vec![],
+                messages: vec![sample_message("hello")],
                 is_hydrated: true,
                 load_ref: None,
             }],
         }
     }
 
+    fn tree_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Tree Workspace".into(),
+            source_path: Some("~/tree".into()),
+            updated_at: 1000,
+            conversations: vec![Conversation {
+                id: "conv-1".into(),
+                external_id: None,
+                branch_parent_id: None,
+                branch_anchor_message_id: None,
+                title: Some("Tree".into()),
+                preview: Some("root".into()),
+                provider: ProviderKind::ClaudeCode,
+                created_at: 1000,
+                updated_at: 1000,
+                segments: vec![],
+                messages: vec![
+                    Message {
+                        id: Some("root".into()),
+                        kind: MessageKind::UserMessage,
+                        participant: Participant::User,
+                        content: "root".into(),
+                        timestamp: Some(1000),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("child".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "child".into(),
+                        timestamp: Some(1100),
+                        parent_id: Some("root".into()),
+                        associated_id: None,
+                        depth: 1,
+                    },
+                ],
+                is_hydrated: true,
+                load_ref: None,
+            }],
+        }
+    }
+
+    fn linear_reply_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Linear Reply Workspace".into(),
+            source_path: Some("~/linear".into()),
+            updated_at: 1000,
+            conversations: vec![Conversation {
+                id: "conv-1".into(),
+                external_id: None,
+                branch_parent_id: None,
+                branch_anchor_message_id: None,
+                title: Some("Linear".into()),
+                preview: Some("root".into()),
+                provider: ProviderKind::ClaudeCode,
+                created_at: 1000,
+                updated_at: 1000,
+                segments: vec![],
+                messages: vec![
+                    Message {
+                        id: Some("user-1".into()),
+                        kind: MessageKind::UserMessage,
+                        participant: Participant::User,
+                        content: "user root".into(),
+                        timestamp: Some(1000),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("assistant-1".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "assistant reply".into(),
+                        timestamp: Some(1100),
+                        parent_id: Some("user-1".into()),
+                        associated_id: None,
+                        depth: 0,
+                    },
+                ],
+                is_hydrated: true,
+                load_ref: None,
+            }],
+        }
+    }
+
+    fn branch_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Branch Workspace".into(),
+            source_path: Some("~/branch".into()),
+            updated_at: 1000,
+            conversations: vec![
+                Conversation {
+                    id: "parent".into(),
+                    external_id: None,
+                    branch_parent_id: None,
+                    branch_anchor_message_id: None,
+                    title: Some("Parent".into()),
+                    preview: Some("parent".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 1000,
+                    updated_at: 1000,
+                    segments: vec![],
+                    messages: vec![Message {
+                        id: Some("root-msg".into()),
+                        ..sample_message("parent root")
+                    }],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+                Conversation {
+                    id: "child".into(),
+                    external_id: None,
+                    branch_parent_id: Some("parent".into()),
+                    branch_anchor_message_id: Some("root-msg".into()),
+                    title: Some("Child Branch".into()),
+                    preview: Some("child".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 1001,
+                    updated_at: 1001,
+                    segments: vec![],
+                    messages: vec![sample_message("child root")],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+            ],
+        }
+    }
+
     #[test]
-    fn test_navigation_flow() {
+    fn navigation_flow_is_workspace_tree_messages() {
         let app = AppTester::<TranscriptBrowser>::default();
         let mut model = Model {
             workspaces: vec![sample_workspace()],
@@ -1019,26 +1241,15 @@ mod tests {
             ..Default::default()
         };
 
-        assert_eq!(
-            model.screen,
-            Screen::Workspaces {
-                selected_workspace: 0
-            }
-        );
-        assert_eq!(app.view(&model).title, "Workspaces");
-
         let _ = app.update(Event::Select, &mut model);
         assert_eq!(
             model.screen,
             Screen::Conversations {
                 workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default()
+                selected_row: 0,
+                expanded_ids: Vec::new(),
             }
         );
-        assert_eq!(app.view(&model).title, "Conversations in 'Test Workspace'");
 
         let _ = app.update(Event::Select, &mut model);
         assert_eq!(
@@ -1046,146 +1257,47 @@ mod tests {
             Screen::Messages {
                 workspace_idx: 0,
                 conv_idx: 0,
-                message_state: MessageSelectionState::default()
+                message_state: MessageSelectionState::default(),
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
             }
         );
-        assert_eq!(app.view(&model).title, "Messages in 'Hello'");
 
         let _ = app.update(Event::Back, &mut model);
         assert_eq!(
             model.screen,
             Screen::Conversations {
                 workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default()
+                selected_row: 0,
+                expanded_ids: Vec::new(),
             }
         );
     }
 
     #[test]
-    fn test_filtering_clamps_conversation_selection() {
-        let app = AppTester::<TranscriptBrowser>::default();
-        let mut workspace = sample_workspace();
-        workspace
-            .conversations
-            .push(sample_conversation("conv-2", ProviderKind::Codex, "World"));
-        let mut model = Model {
-            workspaces: vec![workspace],
-            screen: Screen::Conversations {
-                workspace_idx: 0,
-                selected_conversation: 1,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default(),
-            },
-            ..Default::default()
-        };
-
-        let _ = app.update(Event::CycleFilter, &mut model);
-        assert_eq!(model.provider_filter, Some(ProviderKind::ClaudeCode));
-        assert_eq!(
-            model.screen,
-            Screen::Conversations {
-                workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default()
-            }
-        );
-
-        let view = app.view(&model);
-        if let ViewContent::Table { rows, .. } = view.content {
-            assert_eq!(rows.len(), 1);
-        } else {
-            panic!("Expected Table");
-        }
-    }
-
-    #[test]
-    fn test_filtering_from_messages_returns_to_conversations_if_hidden() {
-        let app = AppTester::<TranscriptBrowser>::default();
-        let mut workspace = sample_workspace();
-        workspace
-            .conversations
-            .push(sample_conversation("conv-2", ProviderKind::Codex, "World"));
-        let mut model = Model {
-            workspaces: vec![workspace],
-            screen: Screen::Messages {
-                workspace_idx: 0,
-                conv_idx: 1,
-                message_state: MessageSelectionState::default(),
-            },
-            ..Default::default()
-        };
-
-        let _ = app.update(Event::CycleFilter, &mut model);
-
-        assert_eq!(model.provider_filter, Some(ProviderKind::ClaudeCode));
-        assert_eq!(
-            model.screen,
-            Screen::Conversations {
-                workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default()
-            }
-        );
-    }
-
-    #[test]
-    fn test_conversation_table_expands_segment_rows() {
+    fn tree_rows_expand_and_select_entry() {
         let app = AppTester::<TranscriptBrowser>::default();
         let mut model = Model {
-            workspaces: vec![segmented_workspace()],
+            workspaces: vec![tree_workspace()],
             current_time: 2000,
             screen: Screen::Conversations {
                 workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default(),
+                selected_row: 0,
+                expanded_ids: Vec::new(),
             },
             ..Default::default()
         };
 
         let _ = app.update(Event::ToggleMessage, &mut model);
-
         let view = app.view(&model);
-        if let ViewContent::Table { rows, .. } = view.content {
-            assert_eq!(view.selected_index, 0);
-            assert_eq!(rows.len(), 3);
-            assert_eq!(rows[0][0], "▾ dump-screen");
-            assert_eq!(rows[1][0], "  ├─ main session");
-            assert_eq!(rows[2][0], "  └─ rollout 019d1665...");
-        } else {
-            panic!("Expected Table");
-        }
-    }
 
-    #[test]
-    fn test_conversation_table_can_select_segment_rows() {
-        let app = AppTester::<TranscriptBrowser>::default();
-        let mut model = Model {
-            workspaces: vec![segmented_workspace()],
-            current_time: 2000,
-            screen: Screen::Conversations {
-                workspace_idx: 0,
-                selected_conversation: 0,
-                expanded_conversations: Vec::new(),
-                layout_mode: LayoutMode::Table,
-                preview_state: MessageSelectionState::default(),
-            },
-            ..Default::default()
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
         };
-
-        let _ = app.update(Event::ToggleMessage, &mut model);
-        let _ = app.update(Event::Down, &mut model);
-        let view = app.view(&model);
-        assert_eq!(view.selected_index, 1);
+        assert_eq!(rows.len(), 3);
+        assert_eq!(rows[0].label, "Tree");
+        assert_eq!(rows[1].label, "root");
+        assert_eq!(rows[2].label, "child");
 
         let _ = app.update(Event::Down, &mut model);
         let _ = app.update(Event::Select, &mut model);
@@ -1196,10 +1308,113 @@ mod tests {
                 workspace_idx: 0,
                 conv_idx: 0,
                 message_state: MessageSelectionState {
-                    focused_message_idx: 1,
+                    focused_message_idx: 0,
                     expanded_messages: Vec::new(),
                 },
+                return_selected_row: 1,
+                return_expanded_ids: vec![browser_conversation_row_id("conv-1")],
             }
         );
+    }
+
+    #[test]
+    fn filtering_from_messages_returns_to_tree_browser() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let mut workspace = sample_workspace();
+        workspace.conversations.push(Conversation {
+            id: "conv-2".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: Some("Codex".into()),
+            preview: Some("codex".into()),
+            provider: ProviderKind::Codex,
+            created_at: 1000,
+            updated_at: 1000,
+            segments: vec![],
+            messages: vec![sample_message("codex")],
+            is_hydrated: true,
+            load_ref: None,
+        });
+
+        let mut model = Model {
+            workspaces: vec![workspace],
+            screen: Screen::Messages {
+                workspace_idx: 0,
+                conv_idx: 1,
+                message_state: MessageSelectionState::default(),
+                return_selected_row: 1,
+                return_expanded_ids: Vec::new(),
+            },
+            ..Default::default()
+        };
+
+        let _ = app.update(Event::CycleFilter, &mut model);
+
+        assert_eq!(model.provider_filter, Some(ProviderKind::ClaudeCode));
+        assert_eq!(
+            model.screen,
+            Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: Vec::new(),
+            }
+        );
+    }
+
+    #[test]
+    fn branch_conversations_render_under_expanded_parent() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let model = Model {
+            workspaces: vec![branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
+            },
+            ..Default::default()
+        };
+
+        let view = app.view(&model);
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
+        };
+
+        assert_eq!(rows[0].label, "Parent");
+        assert_eq!(rows[0].depth, 0);
+        assert_eq!(rows[1].label, "parent root");
+        assert_eq!(rows[1].depth, 1);
+        assert_eq!(rows[2].label, "Child Branch");
+        assert_eq!(rows[2].depth, 2);
+    }
+
+    #[test]
+    fn linear_reply_edges_do_not_create_entry_hierarchy() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let model = Model {
+            workspaces: vec![linear_reply_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: vec![browser_conversation_row_id("conv-1")],
+            },
+            ..Default::default()
+        };
+
+        let view = app.view(&model);
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
+        };
+
+        assert_eq!(rows.len(), 3);
+        assert_eq!(rows[0].label, "Linear");
+        assert_eq!(rows[1].label, "user root");
+        assert_eq!(rows[2].label, "assistant reply");
+        assert_eq!(rows[1].depth, 1);
+        assert_eq!(rows[2].depth, 1);
+        assert!(!rows[1].is_expandable);
+        assert!(!rows[2].is_expandable);
     }
 }

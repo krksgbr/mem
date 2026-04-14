@@ -23,7 +23,7 @@ mod tests {
 
         terminal
             .draw(|f| {
-                render_messages_list(f, f.size(), &messages, &theme, None, true);
+                render_messages_list(f, f.size(), &messages, &theme, None, true, false);
             })
             .unwrap();
 

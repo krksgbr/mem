@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-const SCHEMA_VERSION: i32 = 2;
+const SCHEMA_VERSION: i32 = 3;
 
 const SCHEMA_STATEMENTS: &[&str] = &[
     r#"
@@ -42,6 +42,7 @@ const SCHEMA_STATEMENTS: &[&str] = &[
         workspace_id TEXT REFERENCES workspace(id),
         provider TEXT NOT NULL,
         provider_conversation_id TEXT,
+        parent_conversation_id TEXT REFERENCES conversation(id),
         title TEXT,
         preview_text TEXT,
         status TEXT NOT NULL DEFAULT 'active',
@@ -110,6 +111,7 @@ const SCHEMA_STATEMENTS: &[&str] = &[
     "CREATE INDEX IF NOT EXISTS idx_conversation_workspace_updated ON conversation(workspace_id, updated_at_ms DESC)",
     "CREATE INDEX IF NOT EXISTS idx_conversation_provider_updated ON conversation(provider, updated_at_ms DESC)",
     "CREATE INDEX IF NOT EXISTS idx_conversation_provider_external ON conversation(provider, provider_conversation_id)",
+    "CREATE INDEX IF NOT EXISTS idx_conversation_parent ON conversation(parent_conversation_id)",
     "CREATE INDEX IF NOT EXISTS idx_conversation_source_file_source ON conversation_source_file(source_file_id)",
     "CREATE INDEX IF NOT EXISTS idx_conversation_entry_conversation_ordinal ON conversation_entry(conversation_id, ordinal)",
     "CREATE INDEX IF NOT EXISTS idx_conversation_entry_conversation_timestamp ON conversation_entry(conversation_id, timestamp_ms)",

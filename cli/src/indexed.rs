@@ -481,12 +481,21 @@ fn normalize_conversation_identity(workspace_id: &str, conversation: &mut Conver
         .external_id
         .clone()
         .unwrap_or_else(|| conversation.id.clone());
+    let branch_parent_provider_id = conversation.branch_parent_id.clone();
     conversation.id = format!(
         "{}:{}:{}",
         provider_key(conversation.provider),
         workspace_id,
         provider_native_id
     );
+    conversation.branch_parent_id = branch_parent_provider_id.map(|parent_id| {
+        format!(
+            "{}:{}:{}",
+            provider_key(conversation.provider),
+            workspace_id,
+            parent_id
+        )
+    });
 }
 
 fn normalized_workspace_id(workspace: &Workspace) -> String {
@@ -615,12 +624,23 @@ fn insert_workspaces(
 }
 
 fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation]) -> Result<()> {
+    let imported_ids = imported
+        .iter()
+        .map(|row| row.conversation.id.clone())
+        .collect::<BTreeSet<_>>();
     let mut conv_stmt = tx.prepare(
         r#"
         INSERT INTO conversation (
-            id, workspace_id, provider, provider_conversation_id, title, preview_text, status,
+            id, workspace_id, provider, provider_conversation_id, parent_conversation_id, title, preview_text, status,
             created_at_ms, updated_at_ms, last_source_event_at_ms, metadata_json
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 'active', ?7, ?8, ?9, ?10)
+        ) VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, 'active', ?7, ?8, ?9, ?10)
+        "#,
+    )?;
+    let mut parent_stmt = tx.prepare(
+        r#"
+        UPDATE conversation
+        SET parent_conversation_id = ?2
+        WHERE id = ?1
         "#,
     )?;
     let mut source_stmt = tx.prepare(
@@ -638,6 +658,10 @@ fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation])
             .as_ref()
             .cloned()
             .unwrap_or_else(|| row.conversation.id.clone());
+        let metadata_json = json!({
+            "branch_anchor_message_id": row.conversation.branch_anchor_message_id,
+        })
+        .to_string();
         conv_stmt.execute(params![
             row.conversation.id,
             row.workspace.id,
@@ -648,7 +672,7 @@ fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation])
             row.conversation.created_at,
             row.conversation.updated_at,
             row.conversation.updated_at,
-            "{}",
+            metadata_json,
         ])?;
 
         for source in &row.sources {
@@ -660,6 +684,16 @@ fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation])
                 source.metadata_json,
             ])?;
         }
+    }
+
+    for row in imported {
+        let Some(parent_id) = row.conversation.branch_parent_id.as_ref() else {
+            continue;
+        };
+        if !imported_ids.contains(parent_id) {
+            continue;
+        }
+        parent_stmt.execute(params![row.conversation.id, parent_id])?;
     }
 
     Ok(())
@@ -674,6 +708,13 @@ fn insert_entries(tx: &Transaction<'_>, imported: &[ImportedConversation]) -> Re
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
         "#,
     )?;
+    let mut link_stmt = tx.prepare(
+        r#"
+        UPDATE conversation_entry
+        SET parent_entry_id = ?2, associated_entry_id = ?3
+        WHERE id = ?1
+        "#,
+    )?;
     let mut block_stmt = tx.prepare(
         r#"
         INSERT INTO entry_block (
@@ -686,11 +727,11 @@ fn insert_entries(tx: &Transaction<'_>, imported: &[ImportedConversation]) -> Re
     )?;
 
     for row in imported {
+        let entry_ids = assign_entry_ids(&row.conversation);
+        let canonical_ids = canonical_provider_entry_ids(&row.conversation, &entry_ids);
+
         for (ordinal, message) in row.conversation.messages.iter().enumerate() {
-            let entry_id = message
-                .id
-                .clone()
-                .unwrap_or_else(|| format!("{}:{ordinal}", row.conversation.id));
+            let entry_id = &entry_ids[ordinal];
             let source_file_id = row
                 .sources
                 .first()
@@ -702,8 +743,8 @@ fn insert_entries(tx: &Transaction<'_>, imported: &[ImportedConversation]) -> Re
                 entry_id,
                 row.conversation.id,
                 message_kind_key(message.kind),
-                message.parent_id,
-                message.associated_id,
+                Option::<String>::None,
+                Option::<String>::None,
                 source_file_id,
                 message.id,
                 ordinal as i64,
@@ -737,9 +778,62 @@ fn insert_entries(tx: &Transaction<'_>, imported: &[ImportedConversation]) -> Re
                 fts_stmt.execute(params![entry_id, row.conversation.id, search_text])?;
             }
         }
+        for (ordinal, message) in row.conversation.messages.iter().enumerate() {
+            if message.parent_id.is_none() && message.associated_id.is_none() {
+                continue;
+            }
+            let parent_entry_id = message
+                .parent_id
+                .as_ref()
+                .and_then(|id| canonical_ids.get(id))
+                .cloned();
+            let associated_entry_id = message
+                .associated_id
+                .as_ref()
+                .and_then(|id| canonical_ids.get(id))
+                .cloned();
+            link_stmt.execute(params![
+                &entry_ids[ordinal],
+                parent_entry_id,
+                associated_entry_id
+            ])?;
+        }
     }
 
     Ok(())
+}
+
+fn assign_entry_ids(conversation: &Conversation) -> Vec<String> {
+    let mut seen_raw_ids = BTreeSet::new();
+
+    conversation
+        .messages
+        .iter()
+        .enumerate()
+        .map(|(ordinal, message)| match &message.id {
+            Some(raw_id) if seen_raw_ids.insert(raw_id.clone()) => {
+                format!("{}:{raw_id}", conversation.id)
+            }
+            _ => format!("{}:{ordinal}", conversation.id),
+        })
+        .collect()
+}
+
+fn canonical_provider_entry_ids(
+    conversation: &Conversation,
+    assigned_ids: &[String],
+) -> BTreeMap<String, String> {
+    let mut mapping = BTreeMap::new();
+
+    for (message, assigned_id) in conversation.messages.iter().zip(assigned_ids.iter()) {
+        if let Some(raw_id) = &message.id {
+            mapping
+                .entry(raw_id.clone())
+                .or_insert_with(|| assigned_id.clone());
+        }
+    }
+
+    mapping
 }
 
 fn load_conversation_summaries(
@@ -748,21 +842,26 @@ fn load_conversation_summaries(
 ) -> Result<Vec<Conversation>> {
     let mut stmt = conn.prepare(
         r#"
-        SELECT id, provider_conversation_id, provider, title, preview_text, created_at_ms, updated_at_ms
+        SELECT id, provider_conversation_id, parent_conversation_id, provider, title, preview_text, created_at_ms, updated_at_ms, metadata_json
         FROM conversation
         WHERE workspace_id = ?1 AND status = 'active'
         ORDER BY updated_at_ms DESC, id ASC
         "#,
     )?;
     let rows = stmt.query_map([workspace_id], |row| {
+        let metadata_json: Option<String> = row.get(8)?;
         Ok(Conversation {
             id: row.get(0)?,
             external_id: row.get(1)?,
-            title: row.get(3)?,
-            preview: row.get(4)?,
-            provider: parse_provider_key(&row.get::<_, String>(2)?),
-            created_at: row.get::<_, Option<i64>>(5)?.unwrap_or(0),
-            updated_at: row.get::<_, Option<i64>>(6)?.unwrap_or(0),
+            branch_parent_id: row.get(2)?,
+            branch_anchor_message_id: branch_anchor_message_id_from_metadata(
+                metadata_json.as_deref(),
+            ),
+            title: row.get(4)?,
+            preview: row.get(5)?,
+            provider: parse_provider_key(&row.get::<_, String>(3)?),
+            created_at: row.get::<_, Option<i64>>(6)?.unwrap_or(0),
+            updated_at: row.get::<_, Option<i64>>(7)?.unwrap_or(0),
             segments: Vec::new(),
             messages: Vec::new(),
             is_hydrated: false,
@@ -838,8 +937,8 @@ fn load_full_conversation(
     let conversation = conn
         .query_row(
             r#"
-            SELECT id, workspace_id, provider_conversation_id, provider, title, preview_text,
-                   created_at_ms, updated_at_ms
+            SELECT id, workspace_id, provider_conversation_id, parent_conversation_id, provider, title, preview_text,
+                   created_at_ms, updated_at_ms, metadata_json
             FROM conversation
             WHERE id = ?1 AND status = 'active'
             "#,
@@ -848,11 +947,15 @@ fn load_full_conversation(
                 Ok(Conversation {
                     id: row.get(0)?,
                     external_id: row.get(2)?,
-                    title: row.get(4)?,
-                    preview: row.get(5)?,
-                    provider: parse_provider_key(&row.get::<_, String>(3)?),
-                    created_at: row.get::<_, Option<i64>>(6)?.unwrap_or(0),
-                    updated_at: row.get::<_, Option<i64>>(7)?.unwrap_or(0),
+                    branch_parent_id: row.get(3)?,
+                    branch_anchor_message_id: branch_anchor_message_id_from_metadata(
+                        row.get::<_, Option<String>>(9)?.as_deref(),
+                    ),
+                    title: row.get(5)?,
+                    preview: row.get(6)?,
+                    provider: parse_provider_key(&row.get::<_, String>(4)?),
+                    created_at: row.get::<_, Option<i64>>(7)?.unwrap_or(0),
+                    updated_at: row.get::<_, Option<i64>>(8)?.unwrap_or(0),
                     segments: Vec::new(),
                     messages: Vec::new(),
                     is_hydrated: true,
@@ -940,6 +1043,15 @@ fn depth_from_metadata(metadata_json: &str) -> Option<usize> {
     value.get("depth")?.as_u64().map(|value| value as usize)
 }
 
+fn branch_anchor_message_id_from_metadata(metadata_json: Option<&str>) -> Option<String> {
+    let metadata_json = metadata_json?;
+    let value = serde_json::from_str::<serde_json::Value>(metadata_json).ok()?;
+    value
+        .get("branch_anchor_message_id")
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_string())
+}
+
 fn searchable_text(message: &Message) -> Option<String> {
     if !message.kind.is_searchable_by_default() {
         return None;
@@ -1016,4 +1128,62 @@ fn system_time_to_ms(time: SystemTime) -> Option<i64> {
 
 fn now_ms() -> i64 {
     system_time_to_ms(SystemTime::now()).unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn conversation_with_ids(ids: &[Option<&str>]) -> Conversation {
+        Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: None,
+            preview: None,
+            provider: ProviderKind::ClaudeCode,
+            created_at: 0,
+            updated_at: 0,
+            segments: Vec::new(),
+            messages: ids
+                .iter()
+                .map(|id| Message {
+                    id: id.map(|value| value.to_string()),
+                    kind: MessageKind::AssistantMessage,
+                    participant: Participant::Assistant {
+                        provider: ProviderKind::ClaudeCode,
+                    },
+                    content: "x".into(),
+                    timestamp: None,
+                    parent_id: None,
+                    associated_id: None,
+                    depth: 0,
+                })
+                .collect(),
+            is_hydrated: true,
+            load_ref: None,
+        }
+    }
+
+    #[test]
+    fn assign_entry_ids_falls_back_on_duplicates() {
+        let conversation = conversation_with_ids(&[Some("dup"), Some("dup"), None]);
+        let ids = assign_entry_ids(&conversation);
+
+        assert_eq!(ids, vec!["conv-1:dup", "conv-1:1", "conv-1:2"]);
+    }
+
+    #[test]
+    fn canonical_provider_entry_ids_prefers_first_occurrence() {
+        let conversation = conversation_with_ids(&[Some("dup"), Some("dup"), Some("other")]);
+        let assigned = assign_entry_ids(&conversation);
+        let canonical = canonical_provider_entry_ids(&conversation, &assigned);
+
+        assert_eq!(canonical.get("dup").map(String::as_str), Some("conv-1:dup"));
+        assert_eq!(
+            canonical.get("other").map(String::as_str),
+            Some("conv-1:other")
+        );
+    }
 }
