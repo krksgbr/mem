@@ -8,6 +8,218 @@ use ratatui::{
 };
 use shared::{MessageKind, MessagePreview, ViewContent, ViewModel};
 
+struct RenderedMessageBlock {
+    lines: Vec<Line<'static>>,
+}
+
+impl RenderedMessageBlock {
+    fn line_count(&self) -> usize {
+        self.lines.len()
+    }
+}
+
+fn selected_message_idx(
+    messages: &[MessagePreview],
+    selected_item_index: Option<usize>,
+    show_focus: bool,
+) -> usize {
+    if let Some(idx) = selected_item_index {
+        return idx.min(messages.len().saturating_sub(1));
+    }
+
+    if show_focus {
+        if let Some((idx, _)) = messages.iter().enumerate().find(|(_, msg)| msg.is_focused) {
+            return idx;
+        }
+    }
+
+    0
+}
+
+fn render_message_block(
+    msg: &MessagePreview,
+    wrap_width: usize,
+    theme: &Theme,
+    is_selected_message: bool,
+    show_focus: bool,
+) -> RenderedMessageBlock {
+    let item_style = if is_selected_message {
+        Style::default().bg(theme.selected_bg)
+    } else {
+        Style::default()
+    };
+
+    let (color, prefix) = match msg.kind {
+        MessageKind::UserMessage => (theme.user_msg, msg.participant_label.as_str()),
+        MessageKind::AssistantMessage => (theme.assistant_msg, msg.participant_label.as_str()),
+        MessageKind::ToolCall => (Color::Yellow, "Tool Call"),
+        MessageKind::ToolResult => (Color::LightYellow, "Tool Result"),
+        MessageKind::Thinking => (theme.dim, "Thinking"),
+        MessageKind::Summary => (Color::LightBlue, "Summary"),
+        MessageKind::Compaction => (Color::Magenta, "Compaction"),
+        MessageKind::Label => (Color::Green, "Label"),
+        MessageKind::MetadataChange => (theme.dim, msg.participant_label.as_str()),
+    };
+
+    let indent = "  ".repeat(msg.depth);
+    let focus_prefix = if show_focus && msg.is_focused {
+        "▎ "
+    } else {
+        "  "
+    };
+    let focus_style = if show_focus && msg.is_focused {
+        Style::default().fg(Color::Cyan)
+    } else {
+        Style::default()
+    };
+
+    let mut lines = Vec::new();
+    let mut header_spans = vec![
+        Span::styled(focus_prefix.to_string(), focus_style),
+        Span::raw(indent.clone()),
+        Span::styled(
+            prefix.to_string(),
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        ),
+    ];
+
+    if let Some(time) = &msg.relative_time {
+        header_spans.push(Span::styled(
+            format!(" {}", time),
+            Style::default().fg(theme.dim),
+        ));
+    }
+
+    lines.push(Line::from(header_spans).style(item_style));
+    lines.push(
+        Line::from(vec![Span::styled(focus_prefix.to_string(), focus_style)]).style(item_style),
+    );
+
+    let wrapped_lines = textwrap::wrap(&msg.content, wrap_width);
+    let total_lines = wrapped_lines.len();
+
+    if total_lines <= 12 || msg.is_expanded {
+        for line in wrapped_lines {
+            lines.push(
+                Line::from(vec![
+                    Span::styled(focus_prefix.to_string(), focus_style),
+                    Span::raw(indent.clone()),
+                    Span::raw(line.to_string()),
+                ])
+                .style(item_style),
+            );
+        }
+    } else {
+        for line in &wrapped_lines[0..6] {
+            lines.push(
+                Line::from(vec![
+                    Span::styled(focus_prefix.to_string(), focus_style),
+                    Span::raw(indent.clone()),
+                    Span::raw(line.to_string()),
+                ])
+                .style(item_style),
+            );
+        }
+
+        let hidden = total_lines - 11;
+        lines.push(
+            Line::from(vec![
+                Span::styled(focus_prefix.to_string(), focus_style),
+                Span::raw(indent.clone()),
+                Span::styled(
+                    format!("... ({} more lines)", hidden),
+                    Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
+                ),
+            ])
+            .style(item_style),
+        );
+
+        for line in &wrapped_lines[total_lines - 5..] {
+            lines.push(
+                Line::from(vec![
+                    Span::styled(focus_prefix.to_string(), focus_style),
+                    Span::raw(indent.clone()),
+                    Span::raw(line.to_string()),
+                ])
+                .style(item_style),
+            );
+        }
+    }
+
+    lines.push(
+        Line::from(vec![Span::styled(focus_prefix.to_string(), focus_style)]).style(item_style),
+    );
+    RenderedMessageBlock { lines }
+}
+
+fn visible_message_blocks(
+    messages: &[MessagePreview],
+    selected_item_index: Option<usize>,
+    show_focus: bool,
+    area: Rect,
+    theme: &Theme,
+) -> Vec<RenderedMessageBlock> {
+    if messages.is_empty() || area.height == 0 {
+        return Vec::new();
+    }
+
+    let wrap_width = area.width.saturating_sub(4) as usize;
+    let wrap_width = if wrap_width == 0 { 80 } else { wrap_width };
+    let selected_idx = selected_message_idx(messages, selected_item_index, show_focus);
+
+    let mut start = selected_idx;
+    let mut end = selected_idx + 1;
+    let selected_block = render_message_block(
+        &messages[selected_idx],
+        wrap_width,
+        theme,
+        selected_item_index == Some(selected_idx),
+        show_focus,
+    );
+    let mut total_lines = selected_block.line_count();
+    let target_lines = area.height as usize;
+    let mut blocks_after = vec![selected_block];
+    let mut blocks_before = Vec::new();
+
+    while total_lines < target_lines && (start > 0 || end < messages.len()) {
+        if start > 0 {
+            let prev_idx = start - 1;
+            let block = render_message_block(
+                &messages[prev_idx],
+                wrap_width,
+                theme,
+                selected_item_index == Some(prev_idx),
+                show_focus,
+            );
+            total_lines += block.line_count();
+            blocks_before.push(block);
+            start = prev_idx;
+        }
+
+        if total_lines >= target_lines {
+            break;
+        }
+
+        if end < messages.len() {
+            let next_idx = end;
+            let block = render_message_block(
+                &messages[next_idx],
+                wrap_width,
+                theme,
+                selected_item_index == Some(next_idx),
+                show_focus,
+            );
+            total_lines += block.line_count();
+            blocks_after.push(block);
+            end += 1;
+        }
+    }
+
+    blocks_before.reverse();
+    blocks_before.extend(blocks_after);
+    blocks_before
+}
+
 pub fn render_messages_list(
     f: &mut Frame,
     area: Rect,
@@ -16,138 +228,16 @@ pub fn render_messages_list(
     selected_item_index: Option<usize>,
     show_focus: bool,
 ) {
-    let mut list_items = Vec::new();
-    let wrap_width = area.width.saturating_sub(4) as usize;
-    let wrap_width = if wrap_width == 0 { 80 } else { wrap_width };
+    let visible_blocks =
+        visible_message_blocks(messages, selected_item_index, show_focus, area, theme);
+    let visible_lines = visible_blocks
+        .into_iter()
+        .flat_map(|block| block.lines)
+        .take(area.height as usize)
+        .collect::<Vec<_>>();
 
-    let mut selected_list_index = 0;
-    let mut current_item_idx = 0;
-
-    for (message_idx, msg) in messages.iter().enumerate() {
-        let is_selected_message = selected_item_index == Some(message_idx);
-        if is_selected_message || (show_focus && msg.is_focused) {
-            selected_list_index = current_item_idx;
-        }
-        let item_style = if is_selected_message {
-            Style::default().bg(theme.selected_bg)
-        } else {
-            Style::default()
-        };
-
-        let (color, prefix) = match msg.kind {
-            MessageKind::UserMessage => (theme.user_msg, msg.participant_label.as_str()),
-            MessageKind::AssistantMessage => (theme.assistant_msg, msg.participant_label.as_str()),
-            MessageKind::ToolCall => (Color::Yellow, "Tool Call"),
-            MessageKind::ToolResult => (Color::LightYellow, "Tool Result"),
-            MessageKind::Thinking => (theme.dim, "Thinking"),
-            MessageKind::Summary => (Color::LightBlue, "Summary"),
-            MessageKind::Compaction => (Color::Magenta, "Compaction"),
-            MessageKind::Label => (Color::Green, "Label"),
-            MessageKind::MetadataChange => (theme.dim, msg.participant_label.as_str()),
-        };
-
-        let indent = "  ".repeat(msg.depth);
-
-        let focus_prefix = if show_focus && msg.is_focused {
-            "▎ "
-        } else {
-            "  "
-        };
-        let focus_style = if show_focus && msg.is_focused {
-            Style::default().fg(Color::Cyan)
-        } else {
-            Style::default()
-        };
-
-        let mut header_spans = vec![
-            Span::styled(focus_prefix, focus_style),
-            Span::raw(indent.clone()),
-            Span::styled(
-                prefix,
-                Style::default().fg(color).add_modifier(Modifier::BOLD),
-            ),
-        ];
-
-        if let Some(time) = &msg.relative_time {
-            header_spans.push(Span::styled(
-                format!(" {}", time),
-                Style::default().fg(theme.dim),
-            ));
-        }
-
-        list_items.push(ListItem::new(Line::from(header_spans)).style(item_style));
-        list_items.push(
-            ListItem::new(Line::from(vec![Span::styled(focus_prefix, focus_style)]))
-                .style(item_style),
-        );
-        current_item_idx += 2;
-
-        let wrapped_lines = textwrap::wrap(&msg.content, wrap_width);
-        let total_lines = wrapped_lines.len();
-
-        if total_lines <= 12 || msg.is_expanded {
-            for line in wrapped_lines {
-                list_items.push(
-                    ListItem::new(Line::from(vec![
-                        Span::styled(focus_prefix, focus_style),
-                        Span::raw(indent.clone()),
-                        Span::raw(line.to_string()),
-                    ]))
-                    .style(item_style),
-                );
-                current_item_idx += 1;
-            }
-        } else {
-            for line in &wrapped_lines[0..6] {
-                list_items.push(
-                    ListItem::new(Line::from(vec![
-                        Span::styled(focus_prefix, focus_style),
-                        Span::raw(line.to_string()),
-                    ]))
-                    .style(item_style),
-                );
-                current_item_idx += 1;
-            }
-
-            let hidden = total_lines - 11;
-            let trunc_msg = format!("... ({} more lines)", hidden);
-            list_items.push(
-                ListItem::new(Line::from(vec![
-                    Span::styled(focus_prefix, focus_style),
-                    Span::raw(indent.clone()),
-                    Span::styled(
-                        trunc_msg,
-                        Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
-                    ),
-                ]))
-                .style(item_style),
-            );
-            current_item_idx += 1;
-
-            for line in &wrapped_lines[total_lines - 5..] {
-                list_items.push(
-                    ListItem::new(Line::from(vec![
-                        Span::styled(focus_prefix, focus_style),
-                        Span::raw(indent.clone()),
-                        Span::raw(line.to_string()),
-                    ]))
-                    .style(item_style),
-                );
-                current_item_idx += 1;
-            }
-        }
-
-        list_items.push(
-            ListItem::new(Line::from(vec![Span::styled(focus_prefix, focus_style)]))
-                .style(item_style),
-        );
-        current_item_idx += 1;
-    }
-
-    let list = List::new(list_items).block(Block::default());
-    let mut preview_state = ListState::default();
-    preview_state.select(Some(selected_list_index));
-    f.render_stateful_widget(list, area, &mut preview_state);
+    let paragraph = Paragraph::new(visible_lines).block(Block::default());
+    f.render_widget(paragraph, area);
 }
 
 pub fn render_ui(
@@ -491,5 +581,48 @@ mod tests {
 
         assert!(buffer_str.contains("conv-1"));
         assert!(buffer_str.contains("hi there"));
+    }
+
+    #[test]
+    fn transcript_render_windows_around_selected_message() {
+        let backend = TestBackend::new(60, 12);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let view_model = ViewModel {
+            title: "Messages".into(),
+            breadcrumb: "Workspaces > test > conv".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::MessagesList(
+                (0..6)
+                    .map(|idx| MessagePreview {
+                        kind: MessageKind::UserMessage,
+                        participant_label: "You".into(),
+                        content: format!("message-{}", idx),
+                        depth: 0,
+                        is_focused: false,
+                        is_expanded: false,
+                        relative_time: Some("now".into()),
+                    })
+                    .collect(),
+            ),
+            selected_index: 4,
+            filter_text: "Filter: All".into(),
+        };
+
+        let theme = Theme::default();
+        let mut list_state = ListState::default();
+        let mut table_state = TableState::default();
+
+        terminal
+            .draw(|f| {
+                render_ui(f, &view_model, &mut list_state, &mut table_state, &theme);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let buffer_str = test_utils::buffer_to_string(buffer);
+
+        assert!(buffer_str.contains("message-4"));
+        assert!(!buffer_str.contains("message-0"));
     }
 }
