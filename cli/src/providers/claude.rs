@@ -2,7 +2,8 @@ use anyhow::Result;
 use chrono::DateTime;
 use serde_json::Value;
 use shared::{
-    Conversation, ConversationLoadRef, Message, MessageKind, Participant, ProviderKind, Workspace,
+    parse_claude_scaffold_sequence, Conversation, ConversationLoadRef, Message, MessageKind,
+    Participant, ProviderKind, Workspace,
 };
 use std::collections::{BTreeSet, HashSet};
 use std::fs::{self, File};
@@ -275,12 +276,14 @@ fn scan_message_file(
             .and_then(|value| value.as_bool())
             .unwrap_or(false);
 
-        if acc.fallback_preview.is_none() {
+        if acc.fallback_preview.is_none() && parse_claude_scaffold_sequence(&text_content).is_none()
+        {
             acc.fallback_preview = first_non_empty_line(&text_content).map(str::to_string);
         }
         if acc.user_preview.is_none()
             && role.eq_ignore_ascii_case("user")
             && !(is_sidechain || depth > 0)
+            && parse_claude_scaffold_sequence(&text_content).is_none()
         {
             acc.user_preview = first_non_empty_line(&text_content).map(str::to_string);
         }
@@ -470,7 +473,10 @@ fn parse_timestamp_millis(timestamp: &str) -> Option<i64> {
 }
 
 fn first_non_empty_line(content: &str) -> Option<&str> {
-    content.lines().map(str::trim).find(|line| !line.is_empty())
+    content
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty() && parse_claude_scaffold_sequence(line).is_none())
 }
 
 #[cfg(test)]

@@ -1,4 +1,6 @@
-use crate::{Conversation, Message, MessageKind, ProviderKind, Workspace};
+use crate::{
+    parse_claude_scaffold_artifact, Conversation, Message, MessageKind, ProviderKind, Workspace,
+};
 use crux_core::{App, Command};
 use crux_macros::effect;
 use serde::{Deserialize, Serialize};
@@ -6,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MessagePreview {
+    pub source_index: usize,
     pub kind: MessageKind,
     pub participant_label: String,
     pub content: String,
@@ -25,9 +28,22 @@ pub struct ConversationPreview {
     pub is_selected: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+pub enum TreeRowKind {
+    Conversation,
+    BranchConversation,
+    BranchAnchor,
+    OpeningPrompt,
+    Entry,
+    Delegation,
+    DelegationSummary,
+    Summary,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct TreeRowPreview {
     pub id: String,
+    pub kind: TreeRowKind,
     pub label: String,
     pub secondary: Option<String>,
     pub depth: usize,
@@ -71,18 +87,6 @@ pub struct MessageSelectionState {
 }
 
 impl MessageSelectionState {
-    fn move_up(&mut self) {
-        if self.focused_message_idx > 0 {
-            self.focused_message_idx -= 1;
-        }
-    }
-
-    fn move_down(&mut self, max_messages: usize) {
-        if max_messages > 0 && self.focused_message_idx + 1 < max_messages {
-            self.focused_message_idx += 1;
-        }
-    }
-
     fn toggle_current(&mut self) {
         if let Some(pos) = self
             .expanded_messages
@@ -132,6 +136,7 @@ pub struct Model {
     pub screen: Screen,
     pub provider_filter: Option<ProviderKind>,
     pub current_time: i64,
+    pub status_text: Option<String>,
 }
 
 impl Default for Model {
@@ -141,6 +146,7 @@ impl Default for Model {
             screen: Screen::default(),
             provider_filter: None,
             current_time: 0,
+            status_text: None,
         }
     }
 }
@@ -165,6 +171,7 @@ pub struct ViewModel {
     pub content: ViewContent,
     pub selected_index: usize,
     pub filter_text: String,
+    pub status_text: Option<String>,
     pub breadcrumb: String,
     pub active_id: Option<String>,
 }
@@ -190,6 +197,7 @@ enum BrowserNode<'a> {
 struct BrowserTreeRow<'a> {
     depth: usize,
     node: BrowserNode<'a>,
+    kind: TreeRowKind,
     is_expandable: bool,
     is_expanded: bool,
 }
@@ -251,6 +259,13 @@ fn first_non_empty_line(message: &Message) -> Option<&str> {
         .find(|line| !line.is_empty())
 }
 
+fn is_noise_message(message: &Message) -> bool {
+    // TODO: This is intentionally narrow. Extend the Claude scaffolding classifier deliberately
+    // as new provider-emitted pseudo-XML artifacts show up rather than adding more ad hoc
+    // prefix checks here.
+    parse_claude_scaffold_artifact(&message.content).is_some()
+}
+
 fn browser_conversation_row_id(conversation_id: &str) -> String {
     format!("conv:{conversation_id}")
 }
@@ -278,6 +293,28 @@ fn message_kind_label(kind: MessageKind) -> &'static str {
         MessageKind::Label => "Label",
         MessageKind::MetadataChange => "Metadata",
     }
+}
+
+fn display_conversation_label(conversation: &Conversation) -> String {
+    let label = conversation.display_title();
+    label
+        .strip_suffix(" (Branch)")
+        .unwrap_or(label.as_str())
+        .to_string()
+}
+
+fn workspace_key(workspace: &Workspace) -> &str {
+    workspace
+        .source_path
+        .as_deref()
+        .unwrap_or(workspace.display_name.as_str())
+}
+
+fn conversation_key(conversation: &Conversation) -> &str {
+    conversation
+        .external_id
+        .as_deref()
+        .unwrap_or(conversation.id.as_str())
 }
 
 impl TranscriptBrowser {
@@ -326,12 +363,11 @@ impl TranscriptBrowser {
                     .entry((parent_id, anchor_id))
                     .or_default()
                     .push((conv_idx, conversation));
-            } else {
-                children_by_parent
-                    .entry(parent)
-                    .or_default()
-                    .push((conv_idx, conversation));
             }
+            children_by_parent
+                .entry(parent)
+                .or_default()
+                .push((conv_idx, conversation));
         }
 
         let mut rows = Vec::new();
@@ -368,6 +404,27 @@ impl TranscriptBrowser {
             .get(&Some(conversation.id.as_str()))
             .cloned()
             .unwrap_or_default();
+        let anchored_child_ids = conversation
+            .messages
+            .iter()
+            .filter_map(|message| message.id.as_deref())
+            .flat_map(|message_id| {
+                children_by_anchor
+                    .get(&(conversation.id.as_str(), message_id))
+                    .into_iter()
+                    .flatten()
+                    .map(|(_, child)| child.id.as_str())
+            })
+            .collect::<HashSet<_>>();
+        let has_visible_entry_children = conversation
+            .messages
+            .iter()
+            .filter(|message| !is_noise_message(message))
+            .filter_map(|message| message.id.as_deref())
+            .any(|message_id| {
+                children_by_anchor.contains_key(&(conversation.id.as_str(), message_id))
+            });
+        let is_expandable = has_visible_entry_children || !child_conversations.is_empty();
 
         rows.push(BrowserTreeRow {
             depth,
@@ -375,9 +432,12 @@ impl TranscriptBrowser {
                 conv_idx,
                 conversation,
             },
-            is_expandable: (conversation.has_loaded_messages()
-                && !conversation.messages.is_empty())
-                || !child_conversations.is_empty(),
+            kind: if conversation.branch_parent_id.is_some() {
+                TreeRowKind::BranchConversation
+            } else {
+                TreeRowKind::Conversation
+            },
+            is_expandable,
             is_expanded: conv_is_expanded,
         });
 
@@ -398,6 +458,9 @@ impl TranscriptBrowser {
         }
 
         for (child_idx, child_conversation) in child_conversations {
+            if anchored_child_ids.contains(child_conversation.id.as_str()) {
+                continue;
+            }
             self.push_conversation_rows(
                 child_idx,
                 child_conversation,
@@ -423,95 +486,50 @@ impl TranscriptBrowser {
         >,
         rows: &mut Vec<BrowserTreeRow<'a>>,
     ) {
-        let mut message_ids = HashSet::new();
-        for message in &conversation.messages {
-            if let Some(id) = message.id.as_deref() {
-                message_ids.insert(id.to_string());
+        let branch_anchor_ids = conversation_children_by_anchor
+            .keys()
+            .filter(|(conversation_id, _)| *conversation_id == conversation.id.as_str())
+            .map(|(_, message_id)| *message_id)
+            .collect::<HashSet<_>>();
+        for (message_idx, message) in conversation.messages.iter().enumerate() {
+            if is_noise_message(message) {
+                continue;
             }
-        }
-
-        let mut children_by_parent: HashMap<Option<String>, Vec<usize>> = HashMap::new();
-        let mut root_indices = Vec::new();
-
-        for (idx, message) in conversation.messages.iter().enumerate() {
-            let has_known_parent = message
-                .parent_id
-                .as_deref()
-                .map(|id| id != message.id.as_deref().unwrap_or("") && message_ids.contains(id))
-                .unwrap_or(false);
-
-            let is_structural_child = message.depth > 0 && has_known_parent;
-
-            if is_structural_child {
-                children_by_parent
-                    .entry(message.parent_id.clone())
-                    .or_default()
-                    .push(idx);
-            } else {
-                root_indices.push(idx);
+            let Some(message_id) = message.id.as_deref() else {
+                continue;
+            };
+            if !branch_anchor_ids.contains(message_id) {
+                continue;
             }
-        }
-
-        let mut visited = HashSet::new();
-        for root_idx in root_indices {
-            self.push_entry_subtree(
+            self.push_branch_anchor_row(
                 conversation,
                 conv_idx,
-                root_idx,
+                message_idx,
                 base_depth,
                 expanded_ids,
-                &children_by_parent,
                 conversation_children_by_parent,
                 conversation_children_by_anchor,
-                &mut visited,
                 rows,
             );
         }
-
-        for idx in 0..conversation.messages.len() {
-            if !visited.contains(&idx) {
-                self.push_entry_subtree(
-                    conversation,
-                    conv_idx,
-                    idx,
-                    base_depth,
-                    expanded_ids,
-                    &children_by_parent,
-                    conversation_children_by_parent,
-                    conversation_children_by_anchor,
-                    &mut visited,
-                    rows,
-                );
-            }
-        }
     }
 
-    fn push_entry_subtree<'a>(
+    fn push_branch_anchor_row<'a>(
         &self,
         conversation: &'a Conversation,
         conv_idx: usize,
         message_idx: usize,
         depth: usize,
         expanded_ids: &[String],
-        children_by_parent: &HashMap<Option<String>, Vec<usize>>,
         conversation_children_by_parent: &HashMap<Option<&'a str>, Vec<(usize, &'a Conversation)>>,
         conversation_children_by_anchor: &HashMap<
             (&'a str, &'a str),
             Vec<(usize, &'a Conversation)>,
         >,
-        visited: &mut HashSet<usize>,
         rows: &mut Vec<BrowserTreeRow<'a>>,
     ) {
-        if !visited.insert(message_idx) {
-            return;
-        }
-
         let message = &conversation.messages[message_idx];
         let node_id = browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref());
-        let child_indices = children_by_parent
-            .get(&message.id)
-            .cloned()
-            .unwrap_or_default();
         let branch_children = message
             .id
             .as_deref()
@@ -520,6 +538,7 @@ impl TranscriptBrowser {
             })
             .cloned()
             .unwrap_or_default();
+        let has_branch_children = !branch_children.is_empty();
         let is_expanded = expanded_ids.iter().any(|id| id == &node_id);
 
         rows.push(BrowserTreeRow {
@@ -530,11 +549,14 @@ impl TranscriptBrowser {
                 message_idx,
                 message,
             },
-            is_expandable: !child_indices.is_empty() || !branch_children.is_empty(),
+            kind: TreeRowKind::BranchAnchor,
+            is_expandable: has_branch_children,
             is_expanded,
         });
 
+        let mut anchored_child_ids = HashSet::new();
         for (child_idx, child_conversation) in branch_children.iter().copied() {
+            anchored_child_ids.insert(child_conversation.id.as_str());
             self.push_conversation_rows(
                 child_idx,
                 child_conversation,
@@ -546,18 +568,20 @@ impl TranscriptBrowser {
             );
         }
 
-        if is_expanded {
-            for child_idx in child_indices {
-                self.push_entry_subtree(
-                    conversation,
-                    conv_idx,
+        if let Some(direct_children) =
+            conversation_children_by_parent.get(&Some(conversation.id.as_str()))
+        {
+            for (child_idx, child_conversation) in direct_children.iter().copied() {
+                if anchored_child_ids.contains(child_conversation.id.as_str()) {
+                    continue;
+                }
+                self.push_conversation_rows(
                     child_idx,
+                    child_conversation,
                     depth + 1,
                     expanded_ids,
-                    children_by_parent,
                     conversation_children_by_parent,
                     conversation_children_by_anchor,
-                    visited,
                     rows,
                 );
             }
@@ -573,9 +597,15 @@ impl TranscriptBrowser {
         match row.node {
             BrowserNode::Conversation { conversation, .. } => TreeRowPreview {
                 id: browser_conversation_row_id(&conversation.id),
-                label: conversation.display_title(),
+                kind: row.kind.clone(),
+                label: display_conversation_label(conversation),
                 secondary: Some(format!(
-                    "{} {}",
+                    "{}{} {}",
+                    if matches!(row.kind, TreeRowKind::BranchConversation) {
+                        "Branch • "
+                    } else {
+                        ""
+                    },
                     conversation.provider,
                     format_relative_time(conversation.updated_at, current_time)
                 )),
@@ -594,17 +624,27 @@ impl TranscriptBrowser {
                     .map(ToOwned::to_owned)
                     .unwrap_or_else(|| message_kind_label(message.kind).to_string());
 
-                let secondary = Some(match message.timestamp {
-                    Some(timestamp) => format!(
-                        "{} {}",
-                        message.participant.label(),
-                        format_relative_time(timestamp, current_time)
-                    ),
-                    None => message.participant.label(),
+                let time = message
+                    .timestamp
+                    .map(|timestamp| format_relative_time(timestamp, current_time));
+                let secondary = Some(match row.kind {
+                    TreeRowKind::BranchAnchor => match time {
+                        Some(time) => format!("Branch point • {time}"),
+                        None => "Branch point".to_string(),
+                    },
+                    TreeRowKind::Delegation => match time {
+                        Some(time) => format!("Delegation • {time}"),
+                        None => "Delegation".to_string(),
+                    },
+                    _ => match time {
+                        Some(time) => format!("{} {}", message.participant.label(), time),
+                        None => message.participant.label(),
+                    },
                 });
 
                 TreeRowPreview {
                     id: browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref()),
+                    kind: row.kind.clone(),
                     label,
                     secondary,
                     depth: row.depth,
@@ -637,6 +677,51 @@ impl TranscriptBrowser {
         rows.iter()
             .position(|row| matches!(row.node, BrowserNode::Conversation { conv_idx: row_conv_idx, .. } if row_conv_idx == conv_idx))
             .unwrap_or(0)
+    }
+
+    fn browser_row_id(&self, row: BrowserTreeRow<'_>) -> String {
+        match row.node {
+            BrowserNode::Conversation { conversation, .. } => {
+                browser_conversation_row_id(&conversation.id)
+            }
+            BrowserNode::Entry {
+                conversation,
+                message_idx,
+                message,
+                ..
+            } => browser_entry_row_id(&conversation.id, message_idx, message.id.as_deref()),
+        }
+    }
+
+    fn workspace_index_by_key(&self, workspaces: &[Workspace], key: &str) -> Option<usize> {
+        workspaces
+            .iter()
+            .position(|workspace| workspace_key(workspace) == key)
+    }
+
+    fn conversation_index_by_key(&self, workspace: &Workspace, key: &str) -> Option<usize> {
+        workspace
+            .conversations
+            .iter()
+            .position(|conversation| conversation_key(conversation) == key)
+    }
+
+    fn browser_row_index_by_id(
+        &self,
+        model: &Model,
+        workspace_idx: usize,
+        expanded_ids: &[String],
+        row_id: &str,
+    ) -> Option<usize> {
+        self.browser_rows(model, workspace_idx, expanded_ids)
+            .iter()
+            .position(|row| self.browser_row_id(*row) == row_id)
+    }
+
+    fn visible_message_index_by_id(&self, messages: &[Message], message_id: &str) -> Option<usize> {
+        messages.iter().enumerate().find_map(|(idx, message)| {
+            (!is_noise_message(message) && message.id.as_deref() == Some(message_id)).then_some(idx)
+        })
     }
 
     fn apply_filter_change(&self, model: &mut Model) {
@@ -683,7 +768,9 @@ impl TranscriptBrowser {
         messages
             .iter()
             .enumerate()
+            .filter(|(_, message)| !is_noise_message(message))
             .map(|(idx, message)| MessagePreview {
+                source_index: idx,
                 kind: message.kind,
                 participant_label: message.participant.label(),
                 content: message.content.clone(),
@@ -695,6 +782,44 @@ impl TranscriptBrowser {
                     .map(|timestamp| format_relative_time(timestamp, current_time)),
             })
             .collect()
+    }
+
+    fn nearest_visible_message_index(&self, messages: &[Message], preferred_idx: usize) -> usize {
+        if messages.is_empty() {
+            return 0;
+        }
+        if preferred_idx < messages.len() && !is_noise_message(&messages[preferred_idx]) {
+            return preferred_idx;
+        }
+        for idx in preferred_idx.saturating_add(1)..messages.len() {
+            if !is_noise_message(&messages[idx]) {
+                return idx;
+            }
+        }
+        for idx in (0..preferred_idx.min(messages.len())).rev() {
+            if !is_noise_message(&messages[idx]) {
+                return idx;
+            }
+        }
+        preferred_idx.min(messages.len().saturating_sub(1))
+    }
+
+    fn previous_visible_message_index(&self, messages: &[Message], current_idx: usize) -> usize {
+        for idx in (0..current_idx.min(messages.len())).rev() {
+            if !is_noise_message(&messages[idx]) {
+                return idx;
+            }
+        }
+        current_idx
+    }
+
+    fn next_visible_message_index(&self, messages: &[Message], current_idx: usize) -> usize {
+        for idx in current_idx.saturating_add(1)..messages.len() {
+            if !is_noise_message(&messages[idx]) {
+                return idx;
+            }
+        }
+        current_idx
     }
 }
 
@@ -733,6 +858,9 @@ impl App for TranscriptBrowser {
         model: &mut Model,
         _caps: &Self::Capabilities,
     ) -> Command<Self::Effect, Event> {
+        if !matches!(event, Event::SetWorkspaces(_, _)) {
+            model.status_text = None;
+        }
         match event {
             Event::Up => match &mut model.screen {
                 Screen::Workspaces { selected_workspace } => {
@@ -773,7 +901,19 @@ impl App for TranscriptBrowser {
                 Screen::Messages { .. } => {}
             },
             Event::MessageUp => match &mut model.screen {
-                Screen::Messages { message_state, .. } => message_state.move_up(),
+                Screen::Messages {
+                    workspace_idx,
+                    conv_idx,
+                    message_state,
+                    ..
+                } => {
+                    let messages =
+                        &model.workspaces[*workspace_idx].conversations[*conv_idx].messages;
+                    message_state.focused_message_idx = self.previous_visible_message_index(
+                        messages,
+                        message_state.focused_message_idx,
+                    );
+                }
                 Screen::Workspaces { .. } | Screen::Conversations { .. } => {}
             },
             Event::MessageDown => match model.screen.clone() {
@@ -784,10 +924,10 @@ impl App for TranscriptBrowser {
                     return_selected_row,
                     return_expanded_ids,
                 } => {
-                    let max_messages = model.workspaces[workspace_idx].conversations[conv_idx]
-                        .messages
-                        .len();
-                    message_state.move_down(max_messages);
+                    let messages =
+                        &model.workspaces[workspace_idx].conversations[conv_idx].messages;
+                    message_state.focused_message_idx = self
+                        .next_visible_message_index(messages, message_state.focused_message_idx);
                     model.screen = Screen::Messages {
                         workspace_idx,
                         conv_idx,
@@ -887,6 +1027,10 @@ impl App for TranscriptBrowser {
                                     ..
                                 } => (conv_idx, message_idx),
                             };
+                            let focused_message_idx = self.nearest_visible_message_index(
+                                &model.workspaces[workspace_idx].conversations[conv_idx].messages,
+                                focused_message_idx,
+                            );
 
                             model.screen = Screen::Messages {
                                 workspace_idx,
@@ -936,11 +1080,170 @@ impl App for TranscriptBrowser {
             }
             Event::ToggleLayout => {}
             Event::SetWorkspaces(workspaces, current_time) => {
+                let previous_screen = model.screen.clone();
+                let previous_workspace_key = match &previous_screen {
+                    Screen::Workspaces { selected_workspace } => model
+                        .workspaces
+                        .get(*selected_workspace)
+                        .map(workspace_key)
+                        .map(ToOwned::to_owned),
+                    Screen::Conversations { workspace_idx, .. }
+                    | Screen::Messages { workspace_idx, .. } => model
+                        .workspaces
+                        .get(*workspace_idx)
+                        .map(workspace_key)
+                        .map(ToOwned::to_owned),
+                };
+                let previous_selected_row_id = match &previous_screen {
+                    Screen::Conversations {
+                        workspace_idx,
+                        selected_row,
+                        expanded_ids,
+                    } => self
+                        .selected_browser_row(model, *workspace_idx, *selected_row, expanded_ids)
+                        .map(|row| self.browser_row_id(row)),
+                    Screen::Messages {
+                        workspace_idx,
+                        return_selected_row,
+                        return_expanded_ids,
+                        ..
+                    } => self
+                        .selected_browser_row(
+                            model,
+                            *workspace_idx,
+                            *return_selected_row,
+                            return_expanded_ids,
+                        )
+                        .map(|row| self.browser_row_id(row)),
+                    Screen::Workspaces { .. } => None,
+                };
+                let previous_conversation_key = match &previous_screen {
+                    Screen::Messages {
+                        workspace_idx,
+                        conv_idx,
+                        ..
+                    } => model
+                        .workspaces
+                        .get(*workspace_idx)
+                        .and_then(|workspace| workspace.conversations.get(*conv_idx))
+                        .map(conversation_key)
+                        .map(ToOwned::to_owned),
+                    Screen::Workspaces { .. } | Screen::Conversations { .. } => None,
+                };
+                let previous_focused_message_id = match &previous_screen {
+                    Screen::Messages {
+                        workspace_idx,
+                        conv_idx,
+                        message_state,
+                        ..
+                    } => model
+                        .workspaces
+                        .get(*workspace_idx)
+                        .and_then(|workspace| workspace.conversations.get(*conv_idx))
+                        .and_then(|conversation| {
+                            conversation.messages.get(message_state.focused_message_idx)
+                        })
+                        .and_then(|message| message.id.clone()),
+                    Screen::Workspaces { .. } | Screen::Conversations { .. } => None,
+                };
+
                 model.workspaces = workspaces;
                 model.current_time = current_time;
-                model.screen = Screen::Workspaces {
+
+                let restored_screen = previous_workspace_key
+                    .as_deref()
+                    .and_then(|workspace_key| {
+                        self.workspace_index_by_key(&model.workspaces, workspace_key)
+                    })
+                    .and_then(|workspace_idx| match previous_screen {
+                        Screen::Workspaces {
+                            selected_workspace: _,
+                        } => Some(Screen::Workspaces {
+                            selected_workspace: workspace_idx,
+                        }),
+                        Screen::Conversations {
+                            selected_row: _,
+                            expanded_ids,
+                            ..
+                        } => {
+                            let selected_row = previous_selected_row_id
+                                .as_deref()
+                                .and_then(|row_id| {
+                                    self.browser_row_index_by_id(
+                                        model,
+                                        workspace_idx,
+                                        &expanded_ids,
+                                        row_id,
+                                    )
+                                })
+                                .unwrap_or(0);
+                            Some(Screen::Conversations {
+                                workspace_idx,
+                                selected_row,
+                                expanded_ids,
+                            })
+                        }
+                        Screen::Messages {
+                            conv_idx: _,
+                            message_state,
+                            return_selected_row: _,
+                            return_expanded_ids,
+                            ..
+                        } => {
+                            let workspace = &model.workspaces[workspace_idx];
+                            let conv_idx = previous_conversation_key.as_deref().and_then(
+                                |conversation_key| {
+                                    self.conversation_index_by_key(workspace, conversation_key)
+                                },
+                            )?;
+                            let conversation = &workspace.conversations[conv_idx];
+                            let focused_message_idx = previous_focused_message_id
+                                .as_deref()
+                                .and_then(|message_id| {
+                                    self.visible_message_index_by_id(
+                                        &conversation.messages,
+                                        message_id,
+                                    )
+                                })
+                                .unwrap_or_else(|| {
+                                    self.nearest_visible_message_index(
+                                        &conversation.messages,
+                                        message_state.focused_message_idx,
+                                    )
+                                });
+                            let return_selected_row = previous_selected_row_id
+                                .as_deref()
+                                .and_then(|row_id| {
+                                    self.browser_row_index_by_id(
+                                        model,
+                                        workspace_idx,
+                                        &return_expanded_ids,
+                                        row_id,
+                                    )
+                                })
+                                .unwrap_or_else(|| {
+                                    self.root_row_index_for_conversation(
+                                        model,
+                                        workspace_idx,
+                                        conv_idx,
+                                    )
+                                });
+                            Some(Screen::Messages {
+                                workspace_idx,
+                                conv_idx,
+                                message_state: MessageSelectionState {
+                                    focused_message_idx,
+                                    expanded_messages: message_state.expanded_messages,
+                                },
+                                return_selected_row,
+                                return_expanded_ids,
+                            })
+                        }
+                    });
+
+                model.screen = restored_screen.unwrap_or(Screen::Workspaces {
                     selected_workspace: 0,
-                };
+                });
             }
         }
 
@@ -973,6 +1276,7 @@ impl App for TranscriptBrowser {
                 },
                 selected_index: *selected_workspace,
                 filter_text,
+                status_text: model.status_text.clone(),
             },
             Screen::Conversations {
                 workspace_idx,
@@ -1010,6 +1314,7 @@ impl App for TranscriptBrowser {
                     content: ViewContent::TreeList(previews),
                     selected_index: selected_row,
                     filter_text: format!("{filter_text} | [e/l] Expand  [Enter] Read"),
+                    status_text: model.status_text.clone(),
                 }
             }
             Screen::Messages {
@@ -1045,6 +1350,7 @@ impl App for TranscriptBrowser {
                     content: ViewContent::MessagesList(messages),
                     selected_index: message_state.focused_message_idx,
                     filter_text: format!("{} | [↑/↓] Scroll transcript", filter_text),
+                    status_text: model.status_text.clone(),
                 }
             }
         }
@@ -1218,7 +1524,7 @@ mod tests {
                     external_id: None,
                     branch_parent_id: Some("parent".into()),
                     branch_anchor_message_id: Some("root-msg".into()),
-                    title: Some("Child Branch".into()),
+                    title: Some("Child Branch (Branch)".into()),
                     preview: Some("child".into()),
                     provider: ProviderKind::ClaudeCode,
                     created_at: 1001,
@@ -1229,6 +1535,118 @@ mod tests {
                     load_ref: None,
                 },
             ],
+        }
+    }
+
+    fn unanchored_branch_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Unanchored Branch Workspace".into(),
+            source_path: Some("~/branch-unanchored".into()),
+            updated_at: 1000,
+            conversations: vec![
+                Conversation {
+                    id: "parent".into(),
+                    external_id: None,
+                    branch_parent_id: None,
+                    branch_anchor_message_id: None,
+                    title: Some("Parent".into()),
+                    preview: Some("parent".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 1000,
+                    updated_at: 1000,
+                    segments: vec![],
+                    messages: vec![Message {
+                        id: Some("root-msg".into()),
+                        ..sample_message("parent root")
+                    }],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+                Conversation {
+                    id: "child".into(),
+                    external_id: None,
+                    branch_parent_id: Some("parent".into()),
+                    branch_anchor_message_id: Some("missing-msg".into()),
+                    title: Some("Child Branch (Branch)".into()),
+                    preview: Some("child".into()),
+                    provider: ProviderKind::ClaudeCode,
+                    created_at: 1001,
+                    updated_at: 1001,
+                    segments: vec![],
+                    messages: vec![sample_message("child root")],
+                    is_hydrated: true,
+                    load_ref: None,
+                },
+            ],
+        }
+    }
+
+    fn noise_filtered_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Noise Filter Workspace".into(),
+            source_path: Some("~/noise".into()),
+            updated_at: 1000,
+            conversations: vec![Conversation {
+                id: "conv-1".into(),
+                external_id: None,
+                branch_parent_id: None,
+                branch_anchor_message_id: None,
+                title: Some("Noise".into()),
+                preview: Some("noise".into()),
+                provider: ProviderKind::ClaudeCode,
+                created_at: 1000,
+                updated_at: 1000,
+                segments: vec![],
+                messages: vec![
+                    Message {
+                        id: Some("noise-1".into()),
+                        kind: MessageKind::MetadataChange,
+                        participant: Participant::System,
+                        content: "<local-command-caveat>Caveat: hidden</local-command-caveat>"
+                            .into(),
+                        timestamp: Some(1000),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("visible-1".into()),
+                        kind: MessageKind::UserMessage,
+                        participant: Participant::User,
+                        content: "real user message".into(),
+                        timestamp: Some(1100),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("noise-2".into()),
+                        kind: MessageKind::MetadataChange,
+                        participant: Participant::System,
+                        content: "<command-name>/clear</command-name>".into(),
+                        timestamp: Some(1200),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("visible-2".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "real assistant reply".into(),
+                        timestamp: Some(1300),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                ],
+                is_hydrated: true,
+                load_ref: None,
+            }],
         }
     }
 
@@ -1275,7 +1693,7 @@ mod tests {
     }
 
     #[test]
-    fn tree_rows_expand_and_select_entry() {
+    fn selecting_conversation_row_opens_transcript_when_browser_has_no_visible_children() {
         let app = AppTester::<TranscriptBrowser>::default();
         let mut model = Model {
             workspaces: vec![tree_workspace()],
@@ -1288,18 +1706,16 @@ mod tests {
             ..Default::default()
         };
 
-        let _ = app.update(Event::ToggleMessage, &mut model);
         let view = app.view(&model);
 
         let ViewContent::TreeList(rows) = view.content else {
             panic!("expected tree list");
         };
-        assert_eq!(rows.len(), 3);
+        assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].label, "Tree");
-        assert_eq!(rows[1].label, "root");
-        assert_eq!(rows[2].label, "child");
+        assert_eq!(rows[0].kind, TreeRowKind::Conversation);
+        assert!(!rows[0].is_expandable);
 
-        let _ = app.update(Event::Down, &mut model);
         let _ = app.update(Event::Select, &mut model);
 
         assert_eq!(
@@ -1311,8 +1727,8 @@ mod tests {
                     focused_message_idx: 0,
                     expanded_messages: Vec::new(),
                 },
-                return_selected_row: 1,
-                return_expanded_ids: vec![browser_conversation_row_id("conv-1")],
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
             }
         );
     }
@@ -1385,12 +1801,39 @@ mod tests {
         assert_eq!(rows[0].depth, 0);
         assert_eq!(rows[1].label, "parent root");
         assert_eq!(rows[1].depth, 1);
+        assert_eq!(rows[1].kind, TreeRowKind::BranchAnchor);
         assert_eq!(rows[2].label, "Child Branch");
         assert_eq!(rows[2].depth, 2);
+        assert_eq!(rows[2].kind, TreeRowKind::BranchConversation);
     }
 
     #[test]
-    fn linear_reply_edges_do_not_create_entry_hierarchy() {
+    fn branch_conversations_fallback_to_direct_children_when_anchor_is_missing() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let model = Model {
+            workspaces: vec![unanchored_branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
+            },
+            ..Default::default()
+        };
+
+        let view = app.view(&model);
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
+        };
+
+        assert_eq!(rows[0].label, "Parent");
+        assert_eq!(rows[1].label, "Child Branch");
+        assert_eq!(rows[1].depth, 1);
+        assert_eq!(rows[1].kind, TreeRowKind::BranchConversation);
+    }
+
+    #[test]
+    fn conversations_without_forks_do_not_expand_into_entry_rows() {
         let app = AppTester::<TranscriptBrowser>::default();
         let model = Model {
             workspaces: vec![linear_reply_workspace()],
@@ -1408,13 +1851,239 @@ mod tests {
             panic!("expected tree list");
         };
 
-        assert_eq!(rows.len(), 3);
+        assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].label, "Linear");
-        assert_eq!(rows[1].label, "user root");
-        assert_eq!(rows[2].label, "assistant reply");
-        assert_eq!(rows[1].depth, 1);
-        assert_eq!(rows[2].depth, 1);
-        assert!(!rows[1].is_expandable);
-        assert!(!rows[2].is_expandable);
+        assert_eq!(rows[0].kind, TreeRowKind::Conversation);
+    }
+
+    fn delegation_workspace() -> Workspace {
+        Workspace {
+            id: "workspace-1".into(),
+            display_name: "Delegation Workspace".into(),
+            source_path: Some("~/delegation".into()),
+            updated_at: 1000,
+            conversations: vec![Conversation {
+                id: "conv-1".into(),
+                external_id: None,
+                branch_parent_id: None,
+                branch_anchor_message_id: None,
+                title: Some("Delegation".into()),
+                preview: Some("delegation".into()),
+                provider: ProviderKind::ClaudeCode,
+                created_at: 1000,
+                updated_at: 1000,
+                segments: vec![],
+                messages: vec![
+                    Message {
+                        id: Some("root-user".into()),
+                        kind: MessageKind::UserMessage,
+                        participant: Participant::User,
+                        content: "main prompt".into(),
+                        timestamp: Some(1000),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    },
+                    Message {
+                        id: Some("delegation".into()),
+                        kind: MessageKind::MetadataChange,
+                        participant: Participant::System,
+                        content: "Explore the codebase thoroughly".into(),
+                        timestamp: Some(1100),
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 1,
+                    },
+                    Message {
+                        id: Some("subagent-1".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "I will inspect the repository".into(),
+                        timestamp: Some(1200),
+                        parent_id: Some("delegation".into()),
+                        associated_id: None,
+                        depth: 1,
+                    },
+                    Message {
+                        id: Some("subagent-2".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "I found the relevant files".into(),
+                        timestamp: Some(1300),
+                        parent_id: Some("subagent-1".into()),
+                        associated_id: None,
+                        depth: 1,
+                    },
+                    Message {
+                        id: Some("main-assistant".into()),
+                        kind: MessageKind::AssistantMessage,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::ClaudeCode,
+                        },
+                        content: "Back on the main thread".into(),
+                        timestamp: Some(1400),
+                        parent_id: Some("root-user".into()),
+                        associated_id: None,
+                        depth: 0,
+                    },
+                ],
+                is_hydrated: true,
+                load_ref: None,
+            }],
+        }
+    }
+
+    #[test]
+    fn delegation_sidechains_do_not_appear_in_conversation_browser() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let model = Model {
+            workspaces: vec![delegation_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: vec![browser_conversation_row_id("conv-1")],
+            },
+            ..Default::default()
+        };
+
+        let view = app.view(&model);
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
+        };
+
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].label, "Delegation");
+        assert_eq!(rows[0].kind, TreeRowKind::Conversation);
+    }
+
+    #[test]
+    fn set_workspaces_preserves_conversation_screen_during_refresh() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let mut model = Model {
+            workspaces: vec![branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 1,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
+            },
+            ..Default::default()
+        };
+
+        let mut refreshed = branch_workspace();
+        refreshed.updated_at = 3000;
+        refreshed.conversations[0].updated_at = 3000;
+
+        let _ = app.update(Event::SetWorkspaces(vec![refreshed], 3000), &mut model);
+
+        assert_eq!(
+            model.screen,
+            Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 1,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
+            }
+        );
+    }
+
+    #[test]
+    fn set_workspaces_preserves_message_screen_during_refresh() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let mut model = Model {
+            workspaces: vec![sample_workspace()],
+            current_time: 2000,
+            screen: Screen::Messages {
+                workspace_idx: 0,
+                conv_idx: 0,
+                message_state: MessageSelectionState {
+                    focused_message_idx: 0,
+                    expanded_messages: vec![0],
+                },
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
+            },
+            ..Default::default()
+        };
+
+        let mut refreshed = sample_workspace();
+        refreshed.updated_at = 3000;
+        refreshed.conversations[0].updated_at = 3000;
+
+        let _ = app.update(Event::SetWorkspaces(vec![refreshed], 3000), &mut model);
+
+        assert_eq!(
+            model.screen,
+            Screen::Messages {
+                workspace_idx: 0,
+                conv_idx: 0,
+                message_state: MessageSelectionState {
+                    focused_message_idx: 0,
+                    expanded_messages: vec![0],
+                },
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
+            }
+        );
+    }
+
+    #[test]
+    fn noise_messages_are_hidden_and_navigation_skips_them() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let mut model = Model {
+            workspaces: vec![noise_filtered_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: Vec::new(),
+            },
+            ..Default::default()
+        };
+
+        let _ = app.update(Event::Select, &mut model);
+        assert_eq!(
+            model.screen,
+            Screen::Messages {
+                workspace_idx: 0,
+                conv_idx: 0,
+                message_state: MessageSelectionState {
+                    focused_message_idx: 1,
+                    expanded_messages: Vec::new(),
+                },
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
+            }
+        );
+
+        let view = app.view(&model);
+        let ViewContent::MessagesList(messages) = view.content else {
+            panic!("expected messages list");
+        };
+
+        assert_eq!(messages.len(), 2);
+        assert_eq!(messages[0].source_index, 1);
+        assert_eq!(messages[0].content, "real user message");
+        assert_eq!(messages[1].source_index, 3);
+        assert_eq!(messages[1].content, "real assistant reply");
+
+        let _ = app.update(Event::MessageDown, &mut model);
+        assert_eq!(
+            model.screen,
+            Screen::Messages {
+                workspace_idx: 0,
+                conv_idx: 0,
+                message_state: MessageSelectionState {
+                    focused_message_idx: 3,
+                    expanded_messages: Vec::new(),
+                },
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
+            }
+        );
     }
 }

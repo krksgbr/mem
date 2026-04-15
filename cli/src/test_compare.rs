@@ -28,6 +28,7 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(idx, msg)| MessagePreview {
+                source_index: idx,
                 kind: if idx % 2 == 0 {
                     MessageKind::UserMessage
                 } else {
@@ -59,6 +60,7 @@ mod tests {
             },
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         };
 
         let theme = Theme::default();

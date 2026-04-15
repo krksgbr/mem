@@ -235,6 +235,7 @@ fn profile_scroll(
         &app,
         &mut model,
         &DumpScreenArgs {
+            screen_ref: None,
             screen: ScreenTarget::Messages,
             workspace: Some(args.workspace.clone()),
             conversation: Some(args.conversation.clone()),

@@ -10,6 +10,7 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
 
         let messages = vec![MessagePreview {
+            source_index: 0,
             kind: MessageKind::AssistantMessage,
             participant_label: "Assistant".into(),
             content: "lorem ipsum dolor sit amet ".repeat(40),

@@ -1,6 +1,7 @@
 use crate::{
     args::{DumpScreenArgs, ScreenTarget},
     hydration, render,
+    screen_ref::{load_screen_ref, ScreenRef, ScreenRefState},
     theme::Theme,
 };
 use anyhow::{anyhow, bail, Result};
@@ -26,11 +27,18 @@ pub fn dump_screen_output(
     let app = TranscriptBrowser;
 
     let _ = app.update(Event::SetWorkspaces(workspaces, now_ms), &mut model, &());
-    resolve_screen(&app, &mut model, args)?;
+    let render_size = if let Some(screen_ref_path) = args.screen_ref.as_deref() {
+        let screen_ref = load_screen_ref(std::path::Path::new(screen_ref_path))?;
+        resolve_screen_ref(&app, &mut model, &screen_ref)?;
+        (screen_ref.width, screen_ref.height)
+    } else {
+        resolve_screen(&app, &mut model, args)?;
+        (args.width, args.height)
+    };
     hydration::hydrate_visible_conversation(&mut model)?;
 
     let view_model = app.view(&model);
-    render_view_model_to_string(&view_model, args.width, args.height)
+    render_view_model_to_string(&view_model, render_size.0, render_size.1)
 }
 
 pub(crate) fn resolve_screen(
@@ -99,6 +107,76 @@ pub(crate) fn resolve_screen(
             let _ = app.update(Event::Select, model, &());
             hydration::hydrate_visible_conversation(model)?;
             apply_message_index(app, model, args.message_index)?;
+            Ok(())
+        }
+    }
+}
+
+fn resolve_screen_ref(
+    app: &TranscriptBrowser,
+    model: &mut Model,
+    screen_ref: &ScreenRef,
+) -> Result<()> {
+    apply_provider_filter(app, model, screen_ref.provider_filter)?;
+
+    match &screen_ref.screen {
+        ScreenRefState::Workspaces { selected_workspace } => {
+            let selected_idx = selected_workspace
+                .as_deref()
+                .map(|workspace| find_workspace_index(&model.workspaces, workspace))
+                .transpose()?
+                .unwrap_or(0);
+            move_to_workspace_selection(app, model, selected_idx)
+        }
+        ScreenRefState::Conversations {
+            selected_row_id,
+            selected_row_label,
+            selected_index,
+            expanded_row_ids,
+        } => {
+            let workspace = screen_ref.workspace.as_deref().ok_or_else(|| {
+                anyhow!("screen ref is missing workspace for conversations screen")
+            })?;
+            let workspace_idx = find_workspace_index(&model.workspaces, workspace)?;
+            model.screen = Screen::Conversations {
+                workspace_idx,
+                selected_row: 0,
+                expanded_ids: expanded_row_ids.clone(),
+            };
+            select_tree_row(
+                app,
+                model,
+                selected_row_id.as_deref(),
+                selected_row_label.as_deref(),
+                Some(*selected_index),
+            )?;
+            Ok(())
+        }
+        ScreenRefState::Messages {
+            conversation,
+            focused_message_idx,
+            expanded_message_indices,
+        } => {
+            let workspace = screen_ref
+                .workspace
+                .as_deref()
+                .ok_or_else(|| anyhow!("screen ref is missing workspace for messages screen"))?;
+            let workspace_idx = find_workspace_index(&model.workspaces, workspace)?;
+            let conv_idx = find_conversation_index(
+                &model.workspaces[workspace_idx],
+                model.provider_filter,
+                conversation,
+            )?;
+            model.screen = Screen::Messages {
+                workspace_idx,
+                conv_idx,
+                message_state: shared::MessageSelectionState {
+                    focused_message_idx: *focused_message_idx,
+                    expanded_messages: expanded_message_indices.clone(),
+                },
+                return_selected_row: 0,
+                return_expanded_ids: Vec::new(),
+            };
             Ok(())
         }
     }
@@ -232,13 +310,48 @@ fn select_tree_row_by_id(
     model: &mut Model,
     target_row_id: &str,
 ) -> Result<()> {
+    select_tree_row(app, model, Some(target_row_id), None, None)
+}
+
+fn select_tree_row(
+    app: &TranscriptBrowser,
+    model: &mut Model,
+    target_row_id: Option<&str>,
+    target_label: Option<&str>,
+    target_index: Option<usize>,
+) -> Result<()> {
+    let view = app_view(model);
+    let ViewContent::TreeList(rows) = view.content else {
+        bail!("expected tree list on conversations screen");
+    };
+
+    let target_idx = if let Some(target_row_id) = target_row_id {
+        rows.iter()
+            .position(|row| row.id == target_row_id)
+            .or_else(|| fallback_tree_row_index(&rows, target_row_id, target_label))
+    } else {
+        target_label.and_then(|target_label| rows.iter().position(|row| row.label == target_label))
+    }
+    .or_else(|| {
+        target_index.map(|target_index| {
+            if rows.is_empty() {
+                0
+            } else {
+                target_index.min(rows.len() - 1)
+            }
+        })
+    })
+    .ok_or_else(|| {
+        anyhow!(
+            "tree row '{}' is not visible",
+            target_row_id.unwrap_or("<unknown>")
+        )
+    })?;
+
     loop {
         let view = app_view(model);
-        let ViewContent::TreeList(rows) = view.content else {
+        let ViewContent::TreeList(_) = view.content else {
             bail!("expected tree list on conversations screen");
-        };
-        let Some(target_idx) = rows.iter().position(|row| row.id == target_row_id) else {
-            bail!("tree row '{}' is not visible", target_row_id);
         };
         if view.selected_index == target_idx {
             return Ok(());
@@ -249,6 +362,26 @@ fn select_tree_row_by_id(
             let _ = app.update(Event::Up, model, &());
         }
     }
+}
+
+fn fallback_tree_row_index(
+    rows: &[shared::TreeRowPreview],
+    target_row_id: &str,
+    target_label: Option<&str>,
+) -> Option<usize> {
+    target_label
+        .and_then(|target_label| rows.iter().position(|row| row.label == target_label))
+        .or_else(|| fallback_summary_row_index(rows, target_row_id))
+}
+
+fn fallback_summary_row_index(
+    rows: &[shared::TreeRowPreview],
+    target_row_id: &str,
+) -> Option<usize> {
+    let rest = target_row_id.strip_prefix("summary:")?;
+    let (conversation_id, _range) = rest.rsplit_once(':')?;
+    let prefix = format!("summary:{conversation_id}:");
+    rows.iter().position(|row| row.id.starts_with(&prefix))
 }
 
 fn find_target_conversation_index(
@@ -305,6 +438,29 @@ fn find_target_conversation_index(
             anyhow!(
                 "conversation row '{}' is not visible",
                 target_conversation.id
+            )
+        })
+}
+
+fn find_conversation_index(
+    workspace: &Workspace,
+    provider: Option<ProviderKind>,
+    conversation: &str,
+) -> Result<usize> {
+    workspace
+        .conversations
+        .iter()
+        .enumerate()
+        .find(|(_, candidate)| {
+            provider.is_none_or(|provider| candidate.provider == provider)
+                && conversation_matches(candidate, conversation)
+        })
+        .map(|(idx, _)| idx)
+        .ok_or_else(|| {
+            anyhow!(
+                "conversation '{}' was not found in workspace '{}'",
+                conversation,
+                workspace.display_name
             )
         })
 }
@@ -712,6 +868,7 @@ mod tests {
     fn dump_conversations_table_uses_real_view_model() {
         let output = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Conversations,
                 workspace: Some("~/projects/transcript-browser".into()),
                 conversation: None,
@@ -737,6 +894,7 @@ mod tests {
     fn dump_conversations_tree_can_expand_all_entries() {
         let output = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Conversations,
                 workspace: Some("~/projects/transcript-browser".into()),
                 conversation: None,
@@ -755,13 +913,14 @@ mod tests {
         .unwrap();
 
         assert!(output.contains("hello from user"));
-        assert!(output.contains("assistant response"));
+        assert!(!output.contains("assistant response"));
     }
 
     #[test]
     fn dump_conversations_tree_expand_all_reaches_anchored_branch_conversations() {
         let output = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Conversations,
                 workspace: Some("~/projects/branches".into()),
                 conversation: Some("child".into()),
@@ -788,6 +947,7 @@ mod tests {
     fn dump_conversations_tree_expand_all_uses_visible_row_selection_not_flat_conversation_order() {
         let output = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Conversations,
                 workspace: Some("~/projects/branches".into()),
                 conversation: None,
@@ -813,6 +973,7 @@ mod tests {
     fn dump_messages_screen_renders_message_content() {
         let output = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Messages,
                 workspace: Some("~/projects/transcript-browser".into()),
                 conversation: Some("codex-1".into()),
@@ -839,6 +1000,7 @@ mod tests {
     fn dump_screen_rejects_unknown_workspace() {
         let err = dump_screen_output(
             &DumpScreenArgs {
+                screen_ref: None,
                 screen: ScreenTarget::Conversations,
                 workspace: Some("~/projects/missing".into()),
                 conversation: None,
@@ -858,5 +1020,43 @@ mod tests {
         .to_string();
 
         assert!(err.contains("workspace '~/projects/missing' was not found"));
+    }
+
+    #[test]
+    fn resolve_screen_ref_falls_back_when_summary_row_id_drifts() {
+        let app = TranscriptBrowser;
+        let mut model = Model::default();
+        let _ = app.update(
+            Event::SetWorkspaces(vec![sample_workspace()], 1_000_000),
+            &mut model,
+            &(),
+        );
+
+        resolve_screen_ref(
+            &app,
+            &mut model,
+            &ScreenRef {
+                version: 1,
+                workspace: Some("~/projects/transcript-browser".into()),
+                provider_filter: Some(ProviderKind::Codex),
+                width: 100,
+                height: 16,
+                screen: ScreenRefState::Conversations {
+                    selected_row_id: Some("summary:codex-1:99-100".into()),
+                    selected_row_label: None,
+                    selected_index: 0,
+                    expanded_row_ids: vec!["conv:codex-1".into()],
+                },
+            },
+        )
+        .unwrap();
+
+        let view = app_view(&model);
+        let ViewContent::TreeList(rows) = view.content else {
+            panic!("expected tree list");
+        };
+
+        assert_eq!(view.selected_index, 0);
+        assert_eq!(rows[0].kind, shared::TreeRowKind::Conversation);
     }
 }

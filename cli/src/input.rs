@@ -6,6 +6,7 @@ pub enum InputOutcome {
     Continue,
     Event(Event),
     CopyActiveId,
+    CopyScreenRef,
     Quit,
 }
 
@@ -45,6 +46,7 @@ pub fn handle_key_code(view_model: &ViewModel, key_code: KeyCode) -> Result<Inpu
         KeyCode::Char('f') | KeyCode::Char('F') => Ok(InputOutcome::Event(Event::CycleFilter)),
         KeyCode::Char('e') | KeyCode::Char('E') => Ok(InputOutcome::Event(Event::ToggleMessage)),
         KeyCode::Char('~') => Ok(InputOutcome::Event(Event::ToggleLayout)),
+        KeyCode::Char('C') => Ok(InputOutcome::CopyScreenRef),
         KeyCode::Char('Y') | KeyCode::Char('y') => Ok(InputOutcome::CopyActiveId),
         _ => Ok(InputOutcome::Continue),
     }
@@ -92,6 +94,7 @@ mod tests {
             content: ViewContent::MessagesList(vec![]),
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         }
     }
 
@@ -103,6 +106,7 @@ mod tests {
             content: ViewContent::TreeList(vec![]),
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         }
     }
 
@@ -113,6 +117,7 @@ mod tests {
             active_id: Some("conv-1".into()),
             content: ViewContent::TreeList(vec![shared::TreeRowPreview {
                 id: "conv:1".into(),
+                kind: shared::TreeRowKind::Conversation,
                 label: "dump-screen".into(),
                 secondary: None,
                 depth: 0,
@@ -122,6 +127,7 @@ mod tests {
             }]),
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         }
     }
 
@@ -146,6 +152,7 @@ mod tests {
             },
             selected_index,
             filter_text: "Filter: Codex".into(),
+            status_text: None,
         }
     }
 
@@ -228,6 +235,16 @@ mod tests {
         assert!(matches!(
             handle_key_code(&view, KeyCode::Char('k')).unwrap(),
             InputOutcome::Event(Event::Up)
+        ));
+    }
+
+    #[test]
+    fn uppercase_c_copies_screen_ref() {
+        let view = history_view();
+
+        assert!(matches!(
+            handle_key_code(&view, KeyCode::Char('C')).unwrap(),
+            InputOutcome::CopyScreenRef
         ));
     }
 }

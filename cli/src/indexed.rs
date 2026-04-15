@@ -658,6 +658,28 @@ fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation])
             .as_ref()
             .cloned()
             .unwrap_or_else(|| row.conversation.id.clone());
+        let effective_title = row
+            .conversation
+            .title
+            .as_ref()
+            .filter(|title| !title.trim().is_empty())
+            .cloned()
+            .or_else(|| {
+                let derived = row.conversation.display_title();
+                (derived != row.conversation.id).then_some(derived)
+            });
+        let effective_preview = row
+            .conversation
+            .preview
+            .as_ref()
+            .filter(|preview| !preview.trim().is_empty())
+            .cloned()
+            .or_else(|| {
+                row.conversation
+                    .preview_line()
+                    .map(str::to_owned)
+                    .or_else(|| effective_title.clone())
+            });
         let metadata_json = json!({
             "branch_anchor_message_id": row.conversation.branch_anchor_message_id,
         })
@@ -667,8 +689,8 @@ fn insert_conversations(tx: &Transaction<'_>, imported: &[ImportedConversation])
             row.workspace.id,
             provider_key(row.conversation.provider),
             provider_conversation_id,
-            row.conversation.title,
-            row.conversation.preview,
+            effective_title,
+            effective_preview,
             row.conversation.created_at,
             row.conversation.updated_at,
             row.conversation.updated_at,

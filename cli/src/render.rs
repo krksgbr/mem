@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, TableState},
     Frame,
 };
-use shared::{MessageKind, MessagePreview, TreeRowPreview, ViewContent, ViewModel};
+use shared::{MessageKind, MessagePreview, TreeRowKind, TreeRowPreview, ViewContent, ViewModel};
 
 struct RenderedMessageBlock {
     lines: Vec<Line<'static>>,
@@ -24,7 +24,14 @@ fn selected_message_idx(
     show_focus: bool,
 ) -> usize {
     if let Some(idx) = selected_item_index {
-        return idx.min(messages.len().saturating_sub(1));
+        if let Some((preview_idx, _)) = messages
+            .iter()
+            .enumerate()
+            .find(|(_, msg)| msg.source_index == idx)
+        {
+            return preview_idx;
+        }
+        return messages.len().saturating_sub(1);
     }
 
     if show_focus {
@@ -179,7 +186,7 @@ fn visible_message_blocks(
         &messages[selected_idx],
         wrap_width,
         theme,
-        selected_item_index == Some(selected_idx),
+        selected_item_index == Some(messages[selected_idx].source_index),
         show_focus,
         tree_mode,
     );
@@ -195,7 +202,7 @@ fn visible_message_blocks(
                 &messages[prev_idx],
                 wrap_width,
                 theme,
-                selected_item_index == Some(prev_idx),
+                selected_item_index == Some(messages[prev_idx].source_index),
                 show_focus,
                 tree_mode,
             );
@@ -214,7 +221,7 @@ fn visible_message_blocks(
                 &messages[next_idx],
                 wrap_width,
                 theme,
-                selected_item_index == Some(next_idx),
+                selected_item_index == Some(messages[next_idx].source_index),
                 show_focus,
                 tree_mode,
             );
@@ -263,6 +270,57 @@ fn render_tree_list(
     selected_index: usize,
     theme: &Theme,
 ) {
+    fn truncate_for_width(value: &str, width: usize) -> String {
+        if width == 0 {
+            return String::new();
+        }
+
+        let char_count = value.chars().count();
+        if char_count <= width {
+            return value.to_string();
+        }
+
+        if width == 1 {
+            return "…".to_string();
+        }
+
+        let mut truncated = value.chars().take(width - 1).collect::<String>();
+        truncated.push('…');
+        truncated
+    }
+
+    fn split_tree_row_meta(row: &TreeRowPreview) -> (String, String) {
+        let Some(secondary) = row.secondary.as_deref() else {
+            return (String::new(), String::new());
+        };
+
+        match row.kind {
+            TreeRowKind::Conversation | TreeRowKind::BranchConversation => {
+                let without_branch = secondary.strip_prefix("Branch • ").unwrap_or(secondary);
+                let mut parts = without_branch.rsplitn(2, ' ');
+                let time = parts.next().unwrap_or_default().to_string();
+                let meta = parts.next().unwrap_or_default().to_string();
+                (meta, time)
+            }
+            _ => {
+                if let Some((meta, time)) = secondary.rsplit_once(" • ") {
+                    (meta.to_string(), time.to_string())
+                } else {
+                    (secondary.to_string(), String::new())
+                }
+            }
+        }
+    }
+
+    let (meta_width, time_width) = if area.width < 72 {
+        (12usize, 9usize)
+    } else {
+        (16usize, 12usize)
+    };
+    let label_width = area
+        .width
+        .saturating_sub((meta_width + time_width + 2) as u16) as usize;
+
     let items = rows
         .iter()
         .map(|row| {
@@ -277,31 +335,77 @@ fn render_tree_list(
             };
             let indent = "  ".repeat(row.depth);
             let mut spans = vec![Span::raw(format!("{indent}{marker}"))];
-            spans.push(Span::styled(
-                row.label.clone(),
-                Style::default().add_modifier(if row.depth == 0 {
+            let kind_prefix = match row.kind {
+                TreeRowKind::Conversation => "",
+                TreeRowKind::BranchConversation => "⎇ ",
+                TreeRowKind::BranchAnchor => "⤴ ",
+                TreeRowKind::OpeningPrompt => "• ",
+                TreeRowKind::Entry => "",
+                TreeRowKind::Delegation => "↳ ",
+                TreeRowKind::DelegationSummary => "… ",
+                TreeRowKind::Summary => "… ",
+            };
+            let row_style = match row.kind {
+                TreeRowKind::Conversation => Style::default().add_modifier(if row.depth == 0 {
                     Modifier::BOLD
                 } else {
                     Modifier::empty()
                 }),
-            ));
-            if let Some(secondary) = &row.secondary {
-                spans.push(Span::styled(
-                    format!("  {secondary}"),
-                    Style::default().fg(theme.dim),
-                ));
-            }
+                TreeRowKind::BranchConversation => Style::default().fg(theme.assistant_msg),
+                TreeRowKind::BranchAnchor => Style::default()
+                    .fg(theme.assistant_msg)
+                    .add_modifier(Modifier::BOLD),
+                TreeRowKind::OpeningPrompt => Style::default().add_modifier(Modifier::BOLD),
+                TreeRowKind::Entry => Style::default(),
+                TreeRowKind::Delegation => Style::default().fg(theme.dim),
+                TreeRowKind::DelegationSummary => Style::default().fg(theme.dim),
+                TreeRowKind::Summary => Style::default().fg(theme.dim),
+            };
+            let label = truncate_for_width(&format!("{kind_prefix}{}", row.label), label_width);
+            spans.push(Span::styled(label, row_style));
 
-            ListItem::new(Line::from(spans))
+            let (meta, time) = split_tree_row_meta(row);
+            let meta = truncate_for_width(&meta, meta_width);
+            let time = truncate_for_width(&time, time_width);
+
+            let cells = vec![
+                Cell::from(Line::from(spans)),
+                Cell::from(Line::from(vec![Span::styled(
+                    meta,
+                    Style::default().fg(theme.dim),
+                )])),
+                Cell::from(Line::from(vec![Span::styled(
+                    time,
+                    Style::default().fg(theme.dim),
+                )])),
+            ];
+
+            Row::new(cells)
         })
         .collect::<Vec<_>>();
 
-    let list = List::new(items)
-        .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-        .highlight_symbol("");
-    let mut state = ListState::default();
+    let header = Row::new(vec![
+        Cell::from(Span::styled("Node", Style::default().fg(theme.dim))),
+        Cell::from(Span::styled("Agent", Style::default().fg(theme.dim))),
+        Cell::from(Span::styled("Last Active", Style::default().fg(theme.dim))),
+    ])
+    .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let table = Table::new(
+        items,
+        [
+            Constraint::Min(10),
+            Constraint::Length(meta_width as u16),
+            Constraint::Length(time_width as u16),
+        ],
+    )
+    .header(header)
+    .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+    .column_spacing(1);
+
+    let mut state = TableState::default();
     state.select(Some(selected_index));
-    f.render_stateful_widget(list, area, &mut state);
+    f.render_stateful_widget(table, area, &mut state);
 }
 
 pub fn render_ui(
@@ -526,14 +630,16 @@ pub fn render_ui(
 
     let bindings_text = match &view_model.content {
         ViewContent::TreeList(_) => {
-            " [↑/k ↓/j] Navigate  [e/l] Expand  [Enter] Read  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+            " [↑/k ↓/j] Navigate  [e/l] Expand  [Enter] Read  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
         }
         ViewContent::HistoryList(_) => {
-            " [↑/k ↓/j] Navigate  [Enter/l] Read  [e] Expand  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+            " [↑/k ↓/j] Navigate  [Enter/l] Read  [e] Expand  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
         }
-        ViewContent::MessagesList(_) => " [↑/↓] Scroll  [Esc/h] Back  [Y/y] Copy  [q] Quit ",
+        ViewContent::MessagesList(_) => {
+            " [↑/↓] Scroll  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
+        }
         _ => {
-            " [↑/k ↓/j] Navigate  [e] Expand  [Enter/l] Select  [Esc/h] Back  [Y/y] Copy  [q] Quit "
+            " [↑/k ↓/j] Navigate  [e] Expand  [Enter/l] Select  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
         }
     };
 
@@ -541,6 +647,14 @@ pub fn render_ui(
         Span::styled(
             format!("  {}  ", view_model.filter_text),
             Style::default().fg(theme.dim),
+        ),
+        Span::styled(
+            view_model
+                .status_text
+                .as_ref()
+                .map(|status| format!("  {status}  "))
+                .unwrap_or_default(),
+            Style::default().fg(theme.assistant_msg),
         ),
         Span::styled(bindings_text, Style::default().fg(theme.dim)),
     ];
@@ -573,6 +687,7 @@ mod tests {
             },
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         };
 
         let theme = Theme::default();
@@ -627,6 +742,7 @@ mod tests {
                 ],
                 right_messages: vec![
                     MessagePreview {
+                        source_index: 0,
                         kind: MessageKind::UserMessage,
                         participant_label: "You".into(),
                         content: "hello".into(),
@@ -636,6 +752,7 @@ mod tests {
                         relative_time: Some("1d ago".into()),
                     },
                     MessagePreview {
+                        source_index: 1,
                         kind: MessageKind::AssistantMessage,
                         participant_label: "Codex".into(),
                         content: "hi there".into(),
@@ -648,6 +765,7 @@ mod tests {
             },
             selected_index: 0,
             filter_text: "Filter: All".into(),
+            status_text: None,
         };
 
         let theme = Theme::default();
@@ -680,6 +798,7 @@ mod tests {
             content: ViewContent::MessagesList(
                 (0..6)
                     .map(|idx| MessagePreview {
+                        source_index: idx,
                         kind: MessageKind::UserMessage,
                         participant_label: "You".into(),
                         content: format!("message-{}", idx),
@@ -692,6 +811,7 @@ mod tests {
             ),
             selected_index: 4,
             filter_text: "Filter: All".into(),
+            status_text: None,
         };
 
         let theme = Theme::default();
@@ -709,5 +829,104 @@ mod tests {
 
         assert!(buffer_str.contains("message-4"));
         assert!(!buffer_str.contains("message-0"));
+    }
+
+    #[test]
+    fn tree_list_renders_aligned_columns_with_header() {
+        let backend = TestBackend::new(90, 10);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let view_model = ViewModel {
+            title: "Conversations".into(),
+            breadcrumb: "Workspaces > bookmarking".into(),
+            active_id: Some("parent".into()),
+            content: ViewContent::TreeList(vec![
+                TreeRowPreview {
+                    id: "conv:parent".into(),
+                    kind: TreeRowKind::Conversation,
+                    label: "research-building-a-user-model".into(),
+                    secondary: Some("Claude Code 2d".into()),
+                    depth: 0,
+                    is_selected: true,
+                    is_expandable: true,
+                    is_expanded: true,
+                },
+                TreeRowPreview {
+                    id: "entry:anchor".into(),
+                    kind: TreeRowKind::BranchAnchor,
+                    label: "parent root".into(),
+                    secondary: Some("Branch point • 2d".into()),
+                    depth: 1,
+                    is_selected: false,
+                    is_expandable: false,
+                    is_expanded: false,
+                },
+                TreeRowPreview {
+                    id: "conv:child".into(),
+                    kind: TreeRowKind::BranchConversation,
+                    label: "sticky-note".into(),
+                    secondary: Some("Branch • Claude Code 1d".into()),
+                    depth: 2,
+                    is_selected: false,
+                    is_expandable: false,
+                    is_expanded: false,
+                },
+            ]),
+            selected_index: 0,
+            filter_text: "Filter: Claude Code".into(),
+            status_text: None,
+        };
+
+        let theme = Theme::default();
+        let mut list_state = ListState::default();
+        let mut table_state = TableState::default();
+
+        terminal
+            .draw(|f| {
+                render_ui(f, &view_model, &mut list_state, &mut table_state, &theme);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let buffer_str = test_utils::buffer_to_string(buffer);
+
+        assert!(buffer_str.contains("Node"));
+        assert!(buffer_str.contains("Agent"));
+        assert!(buffer_str.contains("Last Active"));
+        assert!(buffer_str.contains("research-building-a-user-model"));
+        assert!(buffer_str.contains("Claude Code"));
+        assert!(buffer_str.contains("Branch point"));
+        assert!(buffer_str.contains("sticky-note"));
+    }
+
+    #[test]
+    fn render_footer_shows_status_text() {
+        let backend = TestBackend::new(100, 10);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let view_model = ViewModel {
+            title: "Messages".into(),
+            breadcrumb: "Workspaces > test > conv".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::MessagesList(vec![]),
+            selected_index: 0,
+            filter_text: "Filter: All".into(),
+            status_text: Some("Saved screen ref: /tmp/ref.json".into()),
+        };
+
+        let theme = Theme::default();
+        let mut list_state = ListState::default();
+        let mut table_state = TableState::default();
+
+        terminal
+            .draw(|f| {
+                render_ui(f, &view_model, &mut list_state, &mut table_state, &theme);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let buffer_str = test_utils::buffer_to_string(buffer);
+
+        assert!(buffer_str.contains("Saved screen ref: /tmp/ref.json"));
     }
 }

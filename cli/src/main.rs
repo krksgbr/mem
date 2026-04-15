@@ -18,6 +18,7 @@ mod profile_scroll;
 mod providers;
 mod render;
 mod runtime;
+mod screen_ref;
 mod storage;
 mod theme;
 
@@ -201,8 +202,29 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
                         })?;
                         let mut clipboard = arboard::Clipboard::new()?;
                         clipboard.set_text(id.clone())?;
+                        model.status_text = Some(format!("Copied active id: {id}"));
                         if let Some(profiler) = profiler.as_mut() {
                             profiler.log_event("input", format!("copied active id {id}"));
+                        }
+                    }
+                    input::InputOutcome::CopyScreenRef => {
+                        let screen_ref = screen_ref::capture_screen_ref(
+                            &model,
+                            &view_model,
+                            terminal_size.width,
+                            terminal_size.height,
+                        )?;
+                        let path = interactive_screen_ref_path()?;
+                        screen_ref::write_screen_ref(&path, &screen_ref)?;
+
+                        let mut clipboard = arboard::Clipboard::new()?;
+                        clipboard.set_text(path.display().to_string())?;
+                        model.status_text = Some(format!("Saved screen ref: {}", path.display()));
+                        if let Some(profiler) = profiler.as_mut() {
+                            profiler.log_event(
+                                "input",
+                                format!("captured screen ref to {}", path.display()),
+                            );
                         }
                     }
                 }
@@ -247,8 +269,7 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
 }
 
 async fn dump_screen_command(args: &args::DumpScreenArgs) -> Result<()> {
-    storage::ensure_default_index()?;
-    let _ = indexed::sync_now()?;
+    ensure_read_only_index_ready()?;
     let workspaces = indexed::load_workspace_summaries()?;
     let now_ms = Utc::now().timestamp_millis();
     let output = dump_screen::dump_screen_output(args, workspaces, now_ms)?;
@@ -257,8 +278,7 @@ async fn dump_screen_command(args: &args::DumpScreenArgs) -> Result<()> {
 }
 
 async fn search_command(args: &args::SearchArgs) -> Result<()> {
-    storage::ensure_default_index()?;
-    let _ = indexed::sync_now()?;
+    ensure_read_only_index_ready()?;
     let results = indexed::search(&args.query, args.limit)?;
     println!("{}", serde_json::to_string_pretty(&results)?);
     Ok(())
@@ -272,12 +292,19 @@ async fn read_command(args: &args::ReadArgs) -> Result<()> {
 }
 
 async fn profile_scroll_command(args: &args::ProfileScrollArgs) -> Result<()> {
-    storage::ensure_default_index()?;
-    let _ = indexed::sync_now()?;
+    ensure_read_only_index_ready()?;
     let workspaces = indexed::load_workspace_summaries()?;
     let now_ms = Utc::now().timestamp_millis();
     let output = profile_scroll::profile_scroll_output(args, workspaces, now_ms)?;
     println!("{output}");
+    Ok(())
+}
+
+fn ensure_read_only_index_ready() -> Result<()> {
+    storage::ensure_default_index()?;
+    if indexed::load_workspace_summaries()?.is_empty() {
+        let _ = indexed::sync_now()?;
+    }
     Ok(())
 }
 
@@ -293,11 +320,16 @@ fn interactive_profile_path() -> Result<PathBuf> {
     Ok(std::env::current_dir()?.join("transcript-browser-profile.json"))
 }
 
+fn interactive_screen_ref_path() -> Result<PathBuf> {
+    Ok(std::env::current_dir()?.join("transcript-browser-screen-ref.json"))
+}
+
 fn input_outcome_label(outcome: &input::InputOutcome) -> &'static str {
     match outcome {
         input::InputOutcome::Continue => "continue",
         input::InputOutcome::Quit => "quit",
         input::InputOutcome::Event(_) => "event",
         input::InputOutcome::CopyActiveId => "copy_active_id",
+        input::InputOutcome::CopyScreenRef => "copy_screen_ref",
     }
 }

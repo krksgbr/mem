@@ -49,6 +49,7 @@ pub enum ScrollDirection {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DumpScreenArgs {
+    pub screen_ref: Option<String>,
     pub screen: ScreenTarget,
     pub workspace: Option<String>,
     pub conversation: Option<String>,
@@ -73,6 +74,7 @@ pub enum ScreenTarget {
 impl Default for DumpScreenArgs {
     fn default() -> Self {
         Self {
+            screen_ref: None,
             screen: ScreenTarget::Workspaces,
             workspace: None,
             conversation: None,
@@ -279,6 +281,9 @@ where
                 let value = next_value(&mut args, "--screen")?;
                 parsed.screen = parse_screen(&value)?;
             }
+            "--screen-ref" => {
+                parsed.screen_ref = Some(next_value(&mut args, "--screen-ref")?);
+            }
             "--workspace" => {
                 parsed.workspace = Some(next_value(&mut args, "--workspace")?);
             }
@@ -327,6 +332,31 @@ where
 fn validate_dump_screen_args(args: &DumpScreenArgs) -> Result<()> {
     if args.width == 0 || args.height == 0 {
         bail!("--width and --height must be greater than zero");
+    }
+
+    if args.screen_ref.is_some() {
+        if args.workspace.is_some() {
+            bail!("--workspace cannot be combined with --screen-ref");
+        }
+        if args.conversation.is_some() {
+            bail!("--conversation cannot be combined with --screen-ref");
+        }
+        if args.provider.is_some() {
+            bail!("--provider cannot be combined with --screen-ref");
+        }
+        if args.layout.is_some() {
+            bail!("--layout cannot be combined with --screen-ref");
+        }
+        if args.selected != 0 {
+            bail!("--selected cannot be combined with --screen-ref");
+        }
+        if args.message_index != 0 {
+            bail!("--message-index cannot be combined with --screen-ref");
+        }
+        if args.expand_all {
+            bail!("--expand-all cannot be combined with --screen-ref");
+        }
+        return Ok(());
     }
 
     match args.screen {
@@ -507,6 +537,7 @@ mod tests {
             parsed,
             Command::DumpScreen(DumpScreenArgs {
                 screen: ScreenTarget::Conversations,
+                screen_ref: None,
                 workspace: Some("~/projects/transcript-browser".into()),
                 conversation: None,
                 provider: Some(ProviderKind::Codex),
@@ -603,6 +634,35 @@ mod tests {
                 steps: 25,
                 message_index: 10,
                 direction: ScrollDirection::Up,
+            })
+        );
+    }
+
+    #[test]
+    fn parse_dump_screen_screen_ref_args() {
+        let parsed = parse_args(args(&[
+            "cli",
+            "dump-screen",
+            "--screen-ref",
+            "./transcript-browser-screen-ref.json",
+        ]))
+        .unwrap();
+
+        assert_eq!(
+            parsed,
+            Command::DumpScreen(DumpScreenArgs {
+                screen_ref: Some("./transcript-browser-screen-ref.json".into()),
+                screen: ScreenTarget::Workspaces,
+                workspace: None,
+                conversation: None,
+                provider: None,
+                layout: None,
+                width: 120,
+                height: 40,
+                now_ms: None,
+                selected: 0,
+                message_index: 0,
+                expand_all: false,
             })
         );
     }

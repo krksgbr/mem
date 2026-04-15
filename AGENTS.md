@@ -55,13 +55,66 @@ This path is safe for agents because it renders once and exits. Prefer it when y
 **Reference:** When writing rendering tests, do not look for code snippets here. Instead, refer to existing test implementations in the `cli` crate (if available) or standard `ratatui::backend::TestBackend` patterns where you inject a mocked `ViewModel`, call the rendering function, and verify output against the buffer.
 Run `cargo test -p cli` to verify.
 
+### Additional Verification Tools
+
+Use the tools below in this order of preference:
+
+1. **Unit tests and render tests first**
+   - `cargo test -p shared`
+   - `cargo test -p cli`
+   - `cargo check`
+   These are the primary verification path.
+
+2. **`dump-screen` for deterministic real-data snapshots**
+   - `cargo run -p cli -- dump-screen --screen <workspaces|conversations|messages> ...`
+   Use this when you need to inspect one exact screen with real indexed data, specific width/height, and controlled selection inputs.
+   Prefer this over interactive runs whenever a one-shot render is enough.
+
+3. **Screen refs for reproducible collaboration**
+   - In the interactive TUI, press `C` to save a screen ref to `./transcript-browser-screen-ref.json`.
+   - Replay it with:
+     - `cargo run -p cli -- dump-screen --screen-ref ./transcript-browser-screen-ref.json`
+   Use this when a human sees a rendering issue and wants the agent to reconstruct the same view without describing the entire navigation path manually.
+
+4. **`--profile` for event-driven interactive diagnostics**
+   - `cargo run -p cli -- --profile`
+   - or `just run --profile`
+   This writes `./transcript-browser-profile.json` and records startup, background sync, and interaction-driven timing/state information.
+   Use it for slow renders, scroll issues, and state transitions that only appear during live use.
+
+5. **`tui-use` for exploratory PTY interaction**
+   - Example workflow:
+     - `tui-use start --cwd /Users/gaborkerekes/projects/transcript-browser --cols 100 --rows 28 --label transcript-browser "just run --profile"`
+     - `tui-use snapshot --format json`
+     - `tui-use press arrow_down`
+     - `tui-use press enter`
+     - `tui-use kill`
+   Use `tui-use` as a secondary exploration/repro tool when you need to drive the real TUI and inspect how it changes after keypresses.
+   Do **not** treat it as the primary verification path; convert useful findings back into a screen ref, `dump-screen` repro, or test.
+
+### Tool Selection Guidance
+
+- If the bug is a pure state transition problem: use `AppTester` in `shared`.
+- If the bug is a pure rendering/layout problem: use `TestBackend` in `cli`.
+- If the bug depends on real transcript/indexed data but only needs one screen: use `dump-screen`.
+- If a human wants to show the agent an exact view they saw: use a screen ref.
+- If the bug appears only across live interaction over time: use `--profile`, and optionally `tui-use` for PTY driving.
+
+### Practical Caveats
+
+- `dump-screen`, `search`, `read`, `profile-scroll`, and SQLite-backed inspection commands share the local index. Run them **serially**, not in parallel, to avoid `database is locked` failures.
+- `tui-use` is useful for exploration, but scripted navigation by raw key counts is fragile. Prefer visible-text anchors or replayable screen refs when the target screen matters.
+- Interactive profiling and PTY tools are for diagnosis. Tests plus `dump-screen` remain the source of truth for repeatable verification.
+
 ### Summary Checklist for Future Agents
 1. **Never** run the interactive TUI with bare `cargo run` or `cargo run --bin cli`.
 2. Use `AppTester` to verify state and logic changes.
 3. Use `TestBackend` to verify layout, colors, and text changes.
 4. Use `dump-screen` when you need a non-interactive snapshot of a real screen with real transcript data.
-5. Run `cargo check` to catch non-test build issues and warnings in the normal binary target.
-6. Run `cargo test -p shared` and `cargo test -p cli` as the main verification path. If they pass, the TUI logic and rendering are covered without launching the app.
+5. Use `C` screen refs and `--profile` when debugging human-reported interactive issues.
+6. Use `tui-use` only as an exploration/repro tool, not as the primary verification path.
+7. Run `cargo check` to catch non-test build issues and warnings in the normal binary target.
+8. Run `cargo test -p shared` and `cargo test -p cli` as the main verification path. If they pass, the TUI logic and rendering are covered without launching the app.
 
 ## Crux + Ratatui Architectural Rules
 
