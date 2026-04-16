@@ -1,965 +1,203 @@
 {
   "status": "completed",
   "error": null,
-  "started_at_ms": 1776283752365,
-  "finished_at_ms": 1776283778410,
-  "frames": 150,
-  "key_frames": 150,
-  "width": 177,
-  "height": 44,
+  "started_at_ms": 1776284002683,
+  "finished_at_ms": 1776284011702,
+  "frames": 23,
+  "key_frames": 23,
+  "width": 80,
+  "height": 24,
   "log": [
     {
       "seq": 0,
-      "timestamp_ms": 1776283752366,
+      "timestamp_ms": 1776284002683,
       "phase": "startup",
       "detail": "starting interactive run"
     },
     {
       "seq": 1,
-      "timestamp_ms": 1776283752371,
+      "timestamp_ms": 1776284002689,
       "phase": "startup",
       "detail": "ensured default index"
     },
     {
       "seq": 2,
-      "timestamp_ms": 1776283752405,
+      "timestamp_ms": 1776284002726,
       "phase": "startup",
-      "detail": "entered terminal session at 177x44 with 37 workspaces"
+      "detail": "entered terminal session at 80x24 with 37 workspaces"
     },
     {
       "seq": 3,
-      "timestamp_ms": 1776283754706,
+      "timestamp_ms": 1776284005971,
+      "phase": "input",
+      "detail": "applied event Down from key Down"
+    },
+    {
+      "seq": 4,
+      "timestamp_ms": 1776284005973,
       "phase": "input",
       "detail": "applied event Select from key Right"
     },
     {
-      "seq": 4,
-      "timestamp_ms": 1776283755550,
-      "phase": "input",
-      "detail": "applied event Back from key Left"
-    },
-    {
       "seq": 5,
-      "timestamp_ms": 1776283755925,
+      "timestamp_ms": 1776284011632,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 6,
-      "timestamp_ms": 1776283756017,
+      "timestamp_ms": 1776284011635,
       "phase": "input",
-      "detail": "applied event Select from key Right"
+      "detail": "applied event Down from key Down"
     },
     {
       "seq": 7,
-      "timestamp_ms": 1776283756893,
+      "timestamp_ms": 1776284011639,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 8,
-      "timestamp_ms": 1776283757130,
+      "timestamp_ms": 1776284011642,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 9,
-      "timestamp_ms": 1776283757182,
+      "timestamp_ms": 1776284011645,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 10,
-      "timestamp_ms": 1776283757244,
+      "timestamp_ms": 1776284011649,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 11,
-      "timestamp_ms": 1776283757278,
+      "timestamp_ms": 1776284011652,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 12,
-      "timestamp_ms": 1776283757317,
+      "timestamp_ms": 1776284011656,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 13,
-      "timestamp_ms": 1776283757390,
+      "timestamp_ms": 1776284011659,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 14,
-      "timestamp_ms": 1776283757431,
+      "timestamp_ms": 1776284011663,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 15,
-      "timestamp_ms": 1776283757472,
+      "timestamp_ms": 1776284011666,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 16,
-      "timestamp_ms": 1776283757513,
+      "timestamp_ms": 1776284011669,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 17,
-      "timestamp_ms": 1776283757558,
+      "timestamp_ms": 1776284011673,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 18,
-      "timestamp_ms": 1776283757599,
+      "timestamp_ms": 1776284011676,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 19,
-      "timestamp_ms": 1776283757650,
+      "timestamp_ms": 1776284011680,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 20,
-      "timestamp_ms": 1776283757694,
+      "timestamp_ms": 1776284011684,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 21,
-      "timestamp_ms": 1776283757742,
+      "timestamp_ms": 1776284011688,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 22,
-      "timestamp_ms": 1776283757793,
+      "timestamp_ms": 1776284011692,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 23,
-      "timestamp_ms": 1776283757841,
+      "timestamp_ms": 1776284011695,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 24,
-      "timestamp_ms": 1776283758050,
+      "timestamp_ms": 1776284011699,
       "phase": "input",
       "detail": "applied event Down from key Down"
     },
     {
       "seq": 25,
-      "timestamp_ms": 1776283758129,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 26,
-      "timestamp_ms": 1776283758209,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 27,
-      "timestamp_ms": 1776283758290,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 28,
-      "timestamp_ms": 1776283758372,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 29,
-      "timestamp_ms": 1776283758468,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 30,
-      "timestamp_ms": 1776283758566,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 31,
-      "timestamp_ms": 1776283758656,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 32,
-      "timestamp_ms": 1776283758745,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 33,
-      "timestamp_ms": 1776283758845,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 34,
-      "timestamp_ms": 1776283758935,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 35,
-      "timestamp_ms": 1776283759025,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 36,
-      "timestamp_ms": 1776283759117,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 37,
-      "timestamp_ms": 1776283759305,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 38,
-      "timestamp_ms": 1776283759412,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 39,
-      "timestamp_ms": 1776283759528,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 40,
-      "timestamp_ms": 1776283759641,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 41,
-      "timestamp_ms": 1776283759754,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 42,
-      "timestamp_ms": 1776283759867,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 43,
-      "timestamp_ms": 1776283759979,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 44,
-      "timestamp_ms": 1776283760093,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 45,
-      "timestamp_ms": 1776283760207,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 46,
-      "timestamp_ms": 1776283760325,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 47,
-      "timestamp_ms": 1776283760453,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 48,
-      "timestamp_ms": 1776283760572,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 49,
-      "timestamp_ms": 1776283760696,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 50,
-      "timestamp_ms": 1776283760924,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 51,
-      "timestamp_ms": 1776283761068,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 52,
-      "timestamp_ms": 1776283761211,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 53,
-      "timestamp_ms": 1776283761353,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 54,
-      "timestamp_ms": 1776283761493,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 55,
-      "timestamp_ms": 1776283761644,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 56,
-      "timestamp_ms": 1776283761787,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 57,
-      "timestamp_ms": 1776283761930,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 58,
-      "timestamp_ms": 1776283762073,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 59,
-      "timestamp_ms": 1776283762218,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 60,
-      "timestamp_ms": 1776283762361,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 61,
-      "timestamp_ms": 1776283762510,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 62,
-      "timestamp_ms": 1776283762655,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 63,
-      "timestamp_ms": 1776283762801,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 64,
-      "timestamp_ms": 1776283762944,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 65,
-      "timestamp_ms": 1776283763091,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 66,
-      "timestamp_ms": 1776283763241,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 67,
-      "timestamp_ms": 1776283763394,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 68,
-      "timestamp_ms": 1776283763541,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 69,
-      "timestamp_ms": 1776283763689,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 70,
-      "timestamp_ms": 1776283763838,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 71,
-      "timestamp_ms": 1776283763987,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 72,
-      "timestamp_ms": 1776283764138,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 73,
-      "timestamp_ms": 1776283764286,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 74,
-      "timestamp_ms": 1776283764433,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 75,
-      "timestamp_ms": 1776283764584,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 76,
-      "timestamp_ms": 1776283764733,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 77,
-      "timestamp_ms": 1776283764880,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 78,
-      "timestamp_ms": 1776283765048,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 79,
-      "timestamp_ms": 1776283765208,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 80,
-      "timestamp_ms": 1776283765366,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 81,
-      "timestamp_ms": 1776283765518,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 82,
-      "timestamp_ms": 1776283765675,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 83,
-      "timestamp_ms": 1776283765844,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 84,
-      "timestamp_ms": 1776283766014,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 85,
-      "timestamp_ms": 1776283766175,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 86,
-      "timestamp_ms": 1776283766355,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 87,
-      "timestamp_ms": 1776283766532,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 88,
-      "timestamp_ms": 1776283766696,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 89,
-      "timestamp_ms": 1776283766860,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 90,
-      "timestamp_ms": 1776283767025,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 91,
-      "timestamp_ms": 1776283767190,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 92,
-      "timestamp_ms": 1776283767355,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 93,
-      "timestamp_ms": 1776283767520,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 94,
-      "timestamp_ms": 1776283767684,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 95,
-      "timestamp_ms": 1776283767877,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 96,
-      "timestamp_ms": 1776283768047,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 97,
-      "timestamp_ms": 1776283768242,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 98,
-      "timestamp_ms": 1776283768419,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 99,
-      "timestamp_ms": 1776283768621,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 100,
-      "timestamp_ms": 1776283768825,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 101,
-      "timestamp_ms": 1776283769015,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 102,
-      "timestamp_ms": 1776283769202,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 103,
-      "timestamp_ms": 1776283769393,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 104,
-      "timestamp_ms": 1776283769579,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 105,
-      "timestamp_ms": 1776283769763,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 106,
-      "timestamp_ms": 1776283769948,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 107,
-      "timestamp_ms": 1776283770133,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 108,
-      "timestamp_ms": 1776283770319,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 109,
-      "timestamp_ms": 1776283770503,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 110,
-      "timestamp_ms": 1776283770688,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 111,
-      "timestamp_ms": 1776283770872,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 112,
-      "timestamp_ms": 1776283771057,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 113,
-      "timestamp_ms": 1776283771243,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 114,
-      "timestamp_ms": 1776283771427,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 115,
-      "timestamp_ms": 1776283771612,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 116,
-      "timestamp_ms": 1776283771796,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 117,
-      "timestamp_ms": 1776283771981,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 118,
-      "timestamp_ms": 1776283772167,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 119,
-      "timestamp_ms": 1776283772354,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 120,
-      "timestamp_ms": 1776283772542,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 121,
-      "timestamp_ms": 1776283772728,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 122,
-      "timestamp_ms": 1776283772913,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 123,
-      "timestamp_ms": 1776283773097,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 124,
-      "timestamp_ms": 1776283773281,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 125,
-      "timestamp_ms": 1776283773464,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 126,
-      "timestamp_ms": 1776283773648,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 127,
-      "timestamp_ms": 1776283773834,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 128,
-      "timestamp_ms": 1776283774018,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 129,
-      "timestamp_ms": 1776283774202,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 130,
-      "timestamp_ms": 1776283774387,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 131,
-      "timestamp_ms": 1776283774572,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 132,
-      "timestamp_ms": 1776283774757,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 133,
-      "timestamp_ms": 1776283774942,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 134,
-      "timestamp_ms": 1776283775126,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 135,
-      "timestamp_ms": 1776283775311,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 136,
-      "timestamp_ms": 1776283775499,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 137,
-      "timestamp_ms": 1776283775689,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 138,
-      "timestamp_ms": 1776283775873,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 139,
-      "timestamp_ms": 1776283776058,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 140,
-      "timestamp_ms": 1776283776242,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 141,
-      "timestamp_ms": 1776283776429,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 142,
-      "timestamp_ms": 1776283776617,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 143,
-      "timestamp_ms": 1776283776804,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 144,
-      "timestamp_ms": 1776283776988,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 145,
-      "timestamp_ms": 1776283777172,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 146,
-      "timestamp_ms": 1776283777357,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 147,
-      "timestamp_ms": 1776283777540,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 148,
-      "timestamp_ms": 1776283777725,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 149,
-      "timestamp_ms": 1776283777911,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 150,
-      "timestamp_ms": 1776283778096,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 151,
-      "timestamp_ms": 1776283778282,
-      "phase": "input",
-      "detail": "applied event Down from key Down"
-    },
-    {
-      "seq": 152,
-      "timestamp_ms": 1776283778407,
+      "timestamp_ms": 1776284011702,
       "phase": "input",
       "detail": "quit via key Char('q')"
     }
   ],
   "totals_ms": {
-    "poll_wait": 6443.608831000003,
-    "update": 6427.458747000004,
-    "hydrate": 7307.784873999998,
-    "view": 6578.846162,
-    "render": 741.7217970000003,
-    "total": 21072.310416000008
+    "poll_wait": 3.402915999999999,
+    "update": 3.876208,
+    "hydrate": 3.7462040000000005,
+    "view": 18.904955000000005,
+    "render": 41.33650199999999,
+    "total": 71.35033000000001
   },
   "averages_ms": {
-    "poll_wait": 42.95739220666669,
-    "update": 42.849724980000026,
-    "hydrate": 48.718565826666655,
-    "view": 43.858974413333335,
-    "render": 4.944811980000002,
-    "total": 140.48206944000006
+    "poll_wait": 0.14795286956521733,
+    "update": 0.16853078260869567,
+    "hydrate": 0.16287843478260872,
+    "view": 0.8219545652173915,
+    "render": 1.7972392173913039,
+    "total": 3.102188260869566
   },
   "worst_frame": {
-    "frame": 47,
-    "title": "Conversations in '~/unbody/bookmarking'",
-    "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-    "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-    "active_id": "76e770d1-5e34-4436-8a25-492791c7b387",
-    "selected_index": 43,
-    "terminal_cells": 7788,
+    "frame": 0,
+    "title": "Workspaces",
+    "breadcrumb": "Workspaces",
+    "filter_text": "Filter: All Providers [F to cycle]",
+    "active_id": null,
+    "selected_index": 0,
+    "terminal_cells": 1920,
     "key_code": "Down",
     "input_outcome": "event",
     "durations_ms": {
-      "poll_wait": 43.490083,
-      "update": 43.476166,
-      "hydrate": 132.440292,
-      "view": 45.263084,
-      "render": 5.039625,
-      "total": 226.235625
+      "poll_wait": 3.071833,
+      "update": 0.022541,
+      "hydrate": 0.0005,
+      "view": 0.017374999999999998,
+      "render": 1.636125,
+      "total": 4.7565
     }
   },
   "frames_profiled": [
@@ -970,73 +208,73 @@
       "filter_text": "Filter: All Providers [F to cycle]",
       "active_id": null,
       "selected_index": 0,
-      "terminal_cells": 7788,
-      "key_code": "Right",
+      "terminal_cells": 1920,
+      "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 8.792625,
-        "update": 0.030000000000000002,
-        "hydrate": 0.00045900000000000004,
-        "view": 0.015416,
-        "render": 4.333208,
-        "total": 13.144333
+        "poll_wait": 3.071833,
+        "update": 0.022541,
+        "hydrate": 0.0005,
+        "view": 0.017374999999999998,
+        "render": 1.636125,
+        "total": 4.7565
       }
     },
     {
       "frame": 1,
-      "title": "Conversations in '~/projects/transcript-browser'",
-      "breadcrumb": "Workspaces > ~/projects/transcript-browser",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d1607-28db-7f43-b286-d9a76f4291ad",
-      "selected_index": 0,
-      "terminal_cells": 7788,
-      "key_code": "Left",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 0.047833,
-        "update": 0.023458,
-        "hydrate": 10.347417,
-        "view": 10.082707999999998,
-        "render": 2.614375,
-        "total": 23.094834000000002
-      }
-    },
-    {
-      "frame": 2,
-      "title": "Workspaces",
-      "breadcrumb": "Workspaces",
-      "filter_text": "Filter: All Providers [F to cycle]",
-      "active_id": null,
-      "selected_index": 0,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 4.615667,
-        "update": 0.026375,
-        "hydrate": 0.000625,
-        "view": 0.017041,
-        "render": 4.6465,
-        "total": 9.282250000000001
-      }
-    },
-    {
-      "frame": 3,
       "title": "Workspaces",
       "breadcrumb": "Workspaces",
       "filter_text": "Filter: All Providers [F to cycle]",
       "active_id": null,
       "selected_index": 1,
-      "terminal_cells": 7788,
+      "terminal_cells": 1920,
       "key_code": "Right",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 0.6653749999999999,
-        "update": 0.026541,
-        "hydrate": 0.00045900000000000004,
-        "view": 0.016625,
-        "render": 4.580792000000001,
-        "total": 5.26575
+        "poll_wait": 0.003125,
+        "update": 0.01325,
+        "hydrate": 0.000083,
+        "view": 0.011541000000000001,
+        "render": 1.6026250000000002,
+        "total": 1.640541
+      }
+    },
+    {
+      "frame": 2,
+      "title": "Conversations in '~/unbody/bookmarking'",
+      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "36b83837-732d-4796-9def-6eea6652f267",
+      "selected_index": 0,
+      "terminal_cells": 1920,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.283375,
+        "update": 0.27399999999999997,
+        "hydrate": 0.196791,
+        "view": 0.9139579999999999,
+        "render": 1.897417,
+        "total": 3.573375
+      }
+    },
+    {
+      "frame": 3,
+      "title": "Conversations in '~/unbody/bookmarking'",
+      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
+      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
+      "active_id": "2e19ad7e-6b5a-428a-825f-7320a28cf892",
+      "selected_index": 1,
+      "terminal_cells": 1920,
+      "key_code": "Down",
+      "input_outcome": "event",
+      "durations_ms": {
+        "poll_wait": 0.00325,
+        "update": 0.18654199999999999,
+        "hydrate": 0.18637499999999999,
+        "view": 0.8646250000000001,
+        "render": 1.749584,
+        "total": 2.994208
       }
     },
     {
@@ -1044,18 +282,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "36b83837-732d-4796-9def-6eea6652f267",
-      "selected_index": 0,
-      "terminal_cells": 7788,
+      "active_id": "019d8b5f-dde7-7dc0-b515-03dd5062b2c5",
+      "selected_index": 2,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 3.802375,
-        "update": 3.782875,
-        "hydrate": 3.858583,
-        "view": 4.642166,
-        "render": 4.712541,
-        "total": 17.017917
+        "poll_wait": 0.0022919999999999998,
+        "update": 0.18495799999999998,
+        "hydrate": 0.172541,
+        "view": 0.8898750000000001,
+        "render": 1.803875,
+        "total": 3.0555410000000003
       }
     },
     {
@@ -1063,18 +301,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "2e19ad7e-6b5a-428a-825f-7320a28cf892",
-      "selected_index": 1,
-      "terminal_cells": 7788,
+      "active_id": "a0bfc551-9b41-4440-b940-2f0ef209875a",
+      "selected_index": 3,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 4.051917,
-        "update": 4.031459,
-        "hydrate": 4.191167,
-        "view": 4.811625,
-        "render": 4.642666999999999,
-        "total": 17.6995
+        "poll_wait": 0.001833,
+        "update": 0.17733300000000002,
+        "hydrate": 0.167708,
+        "view": 0.8752500000000001,
+        "render": 1.760041,
+        "total": 2.98525
       }
     },
     {
@@ -1082,18 +320,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d8b5f-dde7-7dc0-b515-03dd5062b2c5",
-      "selected_index": 2,
-      "terminal_cells": 7788,
+      "active_id": "a5d31396-9034-4702-bef5-219a6944aa5e",
+      "selected_index": 4,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 4.2277499999999995,
-        "update": 4.205291,
-        "hydrate": 4.141875,
-        "view": 4.618667,
-        "render": 4.9473329999999995,
-        "total": 17.938083
+        "poll_wait": 0.0012920000000000002,
+        "update": 0.185917,
+        "hydrate": 0.16883299999999998,
+        "view": 0.927792,
+        "render": 1.9702919999999997,
+        "total": 3.2565
       }
     },
     {
@@ -1101,18 +339,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "a0bfc551-9b41-4440-b940-2f0ef209875a",
-      "selected_index": 3,
-      "terminal_cells": 7788,
+      "active_id": "ee73149c-4ec4-41bd-bb9a-fb03e7779660",
+      "selected_index": 5,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 6.833125,
-        "update": 6.811583000000001,
-        "hydrate": 41.790667,
-        "view": 8.128541,
-        "render": 4.83575,
-        "total": 61.589958
+        "poll_wait": 0.0015409999999999998,
+        "update": 0.17737499999999998,
+        "hydrate": 0.168917,
+        "view": 0.911041,
+        "render": 1.8538750000000002,
+        "total": 3.114875
       }
     },
     {
@@ -1120,18 +358,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "a5d31396-9034-4702-bef5-219a6944aa5e",
-      "selected_index": 4,
-      "terminal_cells": 7788,
+      "active_id": "019d6e39-62ee-7531-b1a9-486e5659bdd8",
+      "selected_index": 6,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 7.206542,
-        "update": 7.194583,
-        "hydrate": 13.416958,
-        "view": 8.245958,
-        "render": 4.923958,
-        "total": 33.7955
+        "poll_wait": 0.001584,
+        "update": 0.17775000000000002,
+        "hydrate": 0.18225000000000002,
+        "view": 0.8797079999999999,
+        "render": 1.792708,
+        "total": 3.035917
       }
     },
     {
@@ -1139,18 +377,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "ee73149c-4ec4-41bd-bb9a-fb03e7779660",
-      "selected_index": 5,
-      "terminal_cells": 7788,
+      "active_id": "321bd298-6142-47e3-918a-fe8e3c75fb9f",
+      "selected_index": 7,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 8.247792,
-        "update": 8.2255,
-        "hydrate": 15.952333,
-        "view": 8.595416,
-        "render": 5.048541999999999,
-        "total": 37.84675
+        "poll_wait": 0.004958,
+        "update": 0.198042,
+        "hydrate": 0.2285,
+        "view": 0.9670409999999999,
+        "render": 1.973042,
+        "total": 3.376541
       }
     },
     {
@@ -1158,18 +396,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d6e39-62ee-7531-b1a9-486e5659bdd8",
-      "selected_index": 6,
-      "terminal_cells": 7788,
+      "active_id": "019d7101-bc2c-7453-a97e-b7f9f7277664",
+      "selected_index": 8,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 10.968541,
-        "update": 10.955708,
-        "hydrate": 45.775999999999996,
-        "view": 11.585833000000001,
-        "render": 4.739625,
-        "total": 73.07195800000001
+        "poll_wait": 0.001708,
+        "update": 0.18825,
+        "hydrate": 0.17029100000000003,
+        "view": 0.9791249999999999,
+        "render": 1.8004580000000001,
+        "total": 3.142833
       }
     },
     {
@@ -1177,18 +415,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "321bd298-6142-47e3-918a-fe8e3c75fb9f",
-      "selected_index": 7,
-      "terminal_cells": 7788,
+      "active_id": "019d6ec2-5f74-7fb1-bee1-3c597447bacc",
+      "selected_index": 9,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.105291999999999,
-        "update": 11.082915999999999,
-        "hydrate": 12.968166,
-        "view": 11.729875,
-        "render": 4.757292,
-        "total": 40.562584
+        "poll_wait": 0.001542,
+        "update": 0.18016700000000002,
+        "hydrate": 0.166291,
+        "view": 0.8564999999999999,
+        "render": 1.761916,
+        "total": 2.9682910000000002
       }
     },
     {
@@ -1196,18 +434,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d7101-bc2c-7453-a97e-b7f9f7277664",
-      "selected_index": 8,
-      "terminal_cells": 7788,
+      "active_id": "1a1a9847-9340-4071-bdde-8e9bb5519fa3",
+      "selected_index": 10,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 10.998917,
-        "update": 10.985834,
-        "hydrate": 12.734416,
-        "view": 11.402334,
-        "render": 5.018208,
-        "total": 40.156290999999996
+        "poll_wait": 0.001084,
+        "update": 0.17650000000000002,
+        "hydrate": 0.166458,
+        "view": 0.855833,
+        "render": 1.712167,
+        "total": 2.913541
       }
     },
     {
@@ -1215,18 +453,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d6ec2-5f74-7fb1-bee1-3c597447bacc",
-      "selected_index": 9,
-      "terminal_cells": 7788,
+      "active_id": "019d6e3e-5b3d-7cf3-8213-d32b58d2cda6",
+      "selected_index": 11,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.272584,
-        "update": 11.258458000000001,
-        "hydrate": 12.476042,
-        "view": 12.298583,
-        "render": 4.843833,
-        "total": 40.893125000000005
+        "poll_wait": 0.002041,
+        "update": 0.210583,
+        "hydrate": 0.173458,
+        "view": 0.958791,
+        "render": 1.7565,
+        "total": 3.105708
       }
     },
     {
@@ -1234,18 +472,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "1a1a9847-9340-4071-bdde-8e9bb5519fa3",
-      "selected_index": 10,
-      "terminal_cells": 7788,
+      "active_id": "019d6c77-8bc0-77b0-a201-1e751ae115f0",
+      "selected_index": 12,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.241292,
-        "update": 11.2165,
-        "hydrate": 15.319041,
-        "view": 11.982208,
-        "render": 4.784041,
-        "total": 43.328875000000004
+        "poll_wait": 0.00175,
+        "update": 0.174875,
+        "hydrate": 0.190875,
+        "view": 0.891,
+        "render": 1.729125,
+        "total": 2.989625
       }
     },
     {
@@ -1253,18 +491,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d6e3e-5b3d-7cf3-8213-d32b58d2cda6",
-      "selected_index": 11,
-      "terminal_cells": 7788,
+      "active_id": "3421b03d-b945-4f6e-8a0b-0e6b49649a87",
+      "selected_index": 13,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.078249999999999,
-        "update": 11.063959,
-        "hydrate": 12.754167,
-        "view": 12.11275,
-        "render": 4.856916999999999,
-        "total": 40.804
+        "poll_wait": 0.003583,
+        "update": 0.188458,
+        "hydrate": 0.17083399999999999,
+        "view": 0.913667,
+        "render": 1.76025,
+        "total": 3.0395830000000004
       }
     },
     {
@@ -1272,18 +510,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d6c77-8bc0-77b0-a201-1e751ae115f0",
-      "selected_index": 12,
-      "terminal_cells": 7788,
+      "active_id": "7e715545-13d1-4044-8b97-4a8ea788012e",
+      "selected_index": 14,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.930083,
-        "update": 11.9165,
-        "hydrate": 21.247958,
-        "view": 12.568416000000001,
-        "render": 4.780042,
-        "total": 50.528749999999995
+        "poll_wait": 0.002166,
+        "update": 0.18087499999999998,
+        "hydrate": 0.168333,
+        "view": 0.89375,
+        "render": 1.772167,
+        "total": 3.0201249999999997
       }
     },
     {
@@ -1291,18 +529,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "3421b03d-b945-4f6e-8a0b-0e6b49649a87",
-      "selected_index": 13,
-      "terminal_cells": 7788,
+      "active_id": "97dadc75-66fe-4015-ac37-81c1056ca792",
+      "selected_index": 15,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.616249999999999,
-        "update": 11.603333000000001,
-        "hydrate": 13.569625,
-        "view": 12.966458,
-        "render": 4.755833999999999,
-        "total": 42.910667
+        "poll_wait": 0.002792,
+        "update": 0.225625,
+        "hydrate": 0.203208,
+        "view": 0.9089579999999999,
+        "render": 1.916584,
+        "total": 3.261542
       }
     },
     {
@@ -1310,18 +548,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "7e715545-13d1-4044-8b97-4a8ea788012e",
-      "selected_index": 14,
-      "terminal_cells": 7788,
+      "active_id": "019d690a-add7-7912-bf12-7f7198fd954f",
+      "selected_index": 16,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 11.938374999999999,
-        "update": 11.909208,
-        "hydrate": 17.092209,
-        "view": 14.12275,
-        "render": 4.80675,
-        "total": 47.962208
+        "poll_wait": 0.001792,
+        "update": 0.179334,
+        "hydrate": 0.17550000000000002,
+        "view": 0.917458,
+        "render": 1.862417,
+        "total": 3.139458
       }
     },
     {
@@ -1329,18 +567,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "97dadc75-66fe-4015-ac37-81c1056ca792",
-      "selected_index": 15,
-      "terminal_cells": 7788,
+      "active_id": "bf5dd37d-7dae-446f-8e78-7b500549af91",
+      "selected_index": 17,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 12.616458,
-        "update": 12.604249999999999,
-        "hydrate": 18.895625,
-        "view": 13.447583000000002,
-        "render": 4.638875,
-        "total": 49.600792
+        "poll_wait": 0.004791,
+        "update": 0.21800000000000003,
+        "hydrate": 0.17108299999999999,
+        "view": 0.879333,
+        "render": 1.905458,
+        "total": 3.184084
       }
     },
     {
@@ -1348,18 +586,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d690a-add7-7912-bf12-7f7198fd954f",
-      "selected_index": 16,
-      "terminal_cells": 7788,
+      "active_id": "85c58cda-fa0b-44eb-94f0-7a84c8a7baa9",
+      "selected_index": 18,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 12.954417,
-        "update": 12.941292,
-        "hydrate": 16.424292,
-        "view": 13.780958,
-        "render": 4.569707999999999,
-        "total": 47.731541
+        "poll_wait": 0.0022500000000000003,
+        "update": 0.180917,
+        "hydrate": 0.177125,
+        "view": 0.8730829999999999,
+        "render": 1.8414169999999999,
+        "total": 3.0776250000000003
       }
     },
     {
@@ -1367,18 +605,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "bf5dd37d-7dae-446f-8e78-7b500549af91",
-      "selected_index": 17,
-      "terminal_cells": 7788,
+      "active_id": "e87bd317-483e-473c-ae7c-40ed311ef8a2",
+      "selected_index": 19,
+      "terminal_cells": 1920,
       "key_code": "Down",
       "input_outcome": "event",
       "durations_ms": {
-        "poll_wait": 23.104665999999998,
-        "update": 23.091791,
-        "hydrate": 155.852875,
-        "view": 24.775041,
-        "render": 4.653041999999999,
-        "total": 208.387666
+        "poll_wait": 0.001375,
+        "update": 0.17491600000000002,
+        "hydrate": 0.171292,
+        "view": 0.8623339999999999,
+        "render": 1.7486249999999999,
+        "total": 2.960125
       }
     },
     {
@@ -1386,2431 +624,18 @@
       "title": "Conversations in '~/unbody/bookmarking'",
       "breadcrumb": "Workspaces > ~/unbody/bookmarking",
       "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "85c58cda-fa0b-44eb-94f0-7a84c8a7baa9",
-      "selected_index": 18,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 23.61175,
-        "update": 23.598167,
-        "hydrate": 25.047625,
-        "view": 24.432292,
-        "render": 4.694542,
-        "total": 77.7885
-      }
-    },
-    {
-      "frame": 23,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "e87bd317-483e-473c-ae7c-40ed311ef8a2",
-      "selected_index": 19,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 23.256584,
-        "update": 23.234667,
-        "hydrate": 26.987666,
-        "view": 24.834208,
-        "render": 4.79375,
-        "total": 79.874416
-      }
-    },
-    {
-      "frame": 24,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
       "active_id": "98c2526a-d4eb-431e-b589-7795944bbd41",
       "selected_index": 20,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 24.226958,
-        "update": 24.212167,
-        "hydrate": 26.0475,
-        "view": 24.79975,
-        "render": 4.950292,
-        "total": 80.02674999999999
-      }
-    },
-    {
-      "frame": 25,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "a9ff2cd9-fa29-4f13-8e49-db95c4e6c168",
-      "selected_index": 21,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 24.508,
-        "update": 24.494916,
-        "hydrate": 27.183791,
-        "view": 24.928958,
-        "render": 4.897625,
-        "total": 81.5205
-      }
-    },
-    {
-      "frame": 26,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d5e6c-78a8-71c3-bddd-a652acd8e7f4",
-      "selected_index": 22,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 25.3125,
-        "update": 25.298292,
-        "hydrate": 39.286958,
-        "view": 25.519958,
-        "render": 4.868333,
-        "total": 94.99020800000001
-      }
-    },
-    {
-      "frame": 27,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "eade3750-1325-4129-a483-1272b344d584",
-      "selected_index": 23,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 25.625,
-        "update": 25.610583,
-        "hydrate": 39.787584,
-        "view": 26.874709,
-        "render": 4.723666,
-        "total": 97.013709
-      }
-    },
-    {
-      "frame": 28,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d5e48-4c4a-7b71-a9cd-129a4ee4788b",
-      "selected_index": 24,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 26.188625000000002,
-        "update": 26.175375000000003,
-        "hydrate": 30.942041,
-        "view": 27.316916,
-        "render": 4.73775,
-        "total": 89.187416
-      }
-    },
-    {
-      "frame": 29,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "4cd99f9a-762b-49c6-9995-43b2ab0bb0cc",
-      "selected_index": 25,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 26.188416,
-        "update": 26.172917,
-        "hydrate": 30.43075,
-        "view": 27.267709,
-        "render": 4.627417,
-        "total": 88.516542
-      }
-    },
-    {
-      "frame": 30,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "e0929eee-bb31-4a6f-85a2-6b21d960a6f2",
-      "selected_index": 26,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 28.413666,
-        "update": 28.399542,
-        "hydrate": 38.6655,
-        "view": 27.756583000000003,
-        "render": 4.950209,
-        "total": 99.788292
-      }
-    },
-    {
-      "frame": 31,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d59a9-e08b-7a60-adf2-07c76c057320",
-      "selected_index": 27,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 27.252667000000002,
-        "update": 27.237583,
-        "hydrate": 28.77,
-        "view": 27.669042,
-        "render": 4.736292,
-        "total": 88.430667
-      }
-    },
-    {
-      "frame": 32,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "3afe6105-c558-4366-baf6-06fd35dabdce",
-      "selected_index": 28,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 27.694584000000003,
-        "update": 27.6815,
-        "hydrate": 28.619459,
-        "view": 28.188499999999998,
-        "render": 4.952875,
-        "total": 89.457791
-      }
-    },
-    {
-      "frame": 33,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "708349d4-0940-4f60-a516-b6a73432d2bd",
-      "selected_index": 29,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 27.011167,
-        "update": 26.997208,
-        "hydrate": 32.0175,
-        "view": 27.87075,
-        "render": 4.575374999999999,
-        "total": 91.47725
-      }
-    },
-    {
-      "frame": 34,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "aed68404-f3e8-423c-a199-56068c8b70d5",
-      "selected_index": 30,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 33.638791,
-        "update": 33.626459,
-        "hydrate": 113.761875,
-        "view": 34.489667000000004,
-        "render": 4.674583,
-        "total": 186.567541
-      }
-    },
-    {
-      "frame": 35,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "5b03698e-2591-4fae-9dbc-a340e9c3a172",
-      "selected_index": 31,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 33.283958000000005,
-        "update": 33.271916999999995,
-        "hydrate": 35.260540999999996,
-        "view": 33.6715,
-        "render": 4.618625000000001,
-        "total": 106.837167
-      }
-    },
-    {
-      "frame": 36,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "50ac1f2c-76d9-4aad-99f9-a433f6a5d361",
-      "selected_index": 32,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 33.927291,
-        "update": 33.91375,
-        "hydrate": 41.234333,
-        "view": 34.179542,
-        "render": 4.684958,
-        "total": 114.028875
-      }
-    },
-    {
-      "frame": 37,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "1c46f1fb-ffd0-4bb1-b531-eb5adb88091c",
-      "selected_index": 33,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.217667,
-        "update": 34.189917,
-        "hydrate": 38.990417,
-        "view": 34.942458,
-        "render": 4.672583,
-        "total": 112.82516600000001
-      }
-    },
-    {
-      "frame": 38,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "80708a4b-0181-43fd-8196-c79a91c6bf69",
-      "selected_index": 34,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.339209000000004,
-        "update": 34.326665999999996,
-        "hydrate": 37.447959000000004,
-        "view": 35.409041,
-        "render": 4.6532919999999995,
-        "total": 111.85220799999999
-      }
-    },
-    {
-      "frame": 39,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "ced0e33e-3a7c-4e13-8da4-f67615651392",
-      "selected_index": 35,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.382292,
-        "update": 34.368458,
-        "hydrate": 37.345666,
-        "view": 35.022541999999994,
-        "render": 4.689915999999999,
-        "total": 111.442666
-      }
-    },
-    {
-      "frame": 40,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "a350c3ee-455f-44b7-8512-74f1930144d3",
-      "selected_index": 36,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 35.967292,
-        "update": 35.953541,
-        "hydrate": 35.877582999999994,
-        "view": 34.832334,
-        "render": 4.8538749999999995,
-        "total": 111.53358300000001
-      }
-    },
-    {
-      "frame": 41,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "0d50fcfe-9ec1-4edf-93b7-953ecf3923d7",
-      "selected_index": 37,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.7695,
-        "update": 34.75575,
-        "hydrate": 36.694917000000004,
-        "view": 35.755459,
-        "render": 5.273959,
-        "total": 112.496333
-      }
-    },
-    {
-      "frame": 42,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "24d9270d-5f95-4233-a578-39e25384803c",
-      "selected_index": 38,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.570083000000004,
-        "update": 34.553917000000006,
-        "hydrate": 36.621624999999995,
-        "view": 36.6395,
-        "render": 4.839291,
-        "total": 112.672625
-      }
-    },
-    {
-      "frame": 43,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3e37-b697-7320-a106-dbc60409d6ea",
-      "selected_index": 39,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 34.547917,
-        "update": 34.535292000000005,
-        "hydrate": 42.349790999999996,
-        "view": 35.587583,
-        "render": 4.701875,
-        "total": 117.18970900000001
-      }
-    },
-    {
-      "frame": 44,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3a87-fe2e-7631-bba2-3a5bc804dc18",
-      "selected_index": 40,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 35.510708,
-        "update": 35.497209000000005,
-        "hydrate": 50.3085,
-        "view": 36.595042,
-        "render": 4.626916,
-        "total": 127.043083
-      }
-    },
-    {
-      "frame": 45,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "48cffea3-5ad8-4bd9-9380-9e25aa0ab15c",
-      "selected_index": 41,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 36.048708,
-        "update": 36.035708,
-        "hydrate": 39.644292,
-        "view": 36.853917,
-        "render": 5.1776670000000005,
-        "total": 117.727334
-      }
-    },
-    {
-      "frame": 46,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d358b-60c9-7da3-9dd5-4d4ab9e5fd5c",
-      "selected_index": 42,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 36.266167,
-        "update": 36.250958,
-        "hydrate": 43.327334,
-        "view": 37.32125,
-        "render": 5.186416,
-        "total": 122.103459
-      }
-    },
-    {
-      "frame": 47,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "76e770d1-5e34-4436-8a25-492791c7b387",
-      "selected_index": 43,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 43.490083,
-        "update": 43.476166,
-        "hydrate": 132.440292,
-        "view": 45.263084,
-        "render": 5.039625,
-        "total": 226.235625
-      }
-    },
-    {
-      "frame": 48,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d349c-3dd6-7fc1-a9e5-4ee1404b6953",
-      "selected_index": 44,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 43.661875,
-        "update": 43.645666,
-        "hydrate": 49.710292,
-        "view": 44.192291000000004,
-        "render": 5.297834000000001,
-        "total": 142.865166
-      }
-    },
-    {
-      "frame": 49,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d358c-0df8-7312-ab9c-5f4ff11d4bb7",
-      "selected_index": 45,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.763208999999996,
-        "update": 44.750499999999995,
-        "hydrate": 46.304041,
-        "view": 45.519584,
-        "render": 5.214209,
-        "total": 141.803333
-      }
-    },
-    {
-      "frame": 50,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d357f-e0e6-7af1-82e4-63b4464ec51e",
-      "selected_index": 46,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.093,
-        "update": 45.079708000000004,
-        "hydrate": 46.222375,
-        "view": 45.285209,
-        "render": 4.896375,
-        "total": 141.499291
-      }
-    },
-    {
-      "frame": 51,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3580-42c3-7c90-8f52-f982950d52b2",
-      "selected_index": 47,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.053250000000006,
-        "update": 44.040083,
-        "hydrate": 44.419417,
-        "view": 44.687917,
-        "render": 4.854792,
-        "total": 138.01766700000002
-      }
-    },
-    {
-      "frame": 52,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "27ede0a7-10fe-487e-ae44-0fe41756f8ef",
-      "selected_index": 48,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.078083,
-        "update": 46.063624999999995,
-        "hydrate": 52.419792,
-        "view": 46.298459,
-        "render": 5.107125,
-        "total": 149.905667
-      }
-    },
-    {
-      "frame": 53,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d34c6-9d44-7f30-b511-f93852cee5de",
-      "selected_index": 49,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.257999999999996,
-        "update": 44.244583,
-        "hydrate": 47.184208,
-        "view": 46.071917,
-        "render": 4.8218749999999995,
-        "total": 142.33820799999998
-      }
-    },
-    {
-      "frame": 54,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d34c6-0c07-7ef1-ba8a-8557e9b6017f",
-      "selected_index": 50,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.957875,
-        "update": 44.940958,
-        "hydrate": 46.03875,
-        "view": 45.371750000000006,
-        "render": 4.913792,
-        "total": 141.284458
-      }
-    },
-    {
-      "frame": 55,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d34c5-27d0-7f71-82e2-bd1ff53f10c8",
-      "selected_index": 51,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.856167,
-        "update": 44.841417,
-        "hydrate": 45.82,
-        "view": 45.397833,
-        "render": 5.237709,
-        "total": 141.31412500000002
-      }
-    },
-    {
-      "frame": 56,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d342c-f05a-7831-b005-cb8165145ed2",
-      "selected_index": 52,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.733666,
-        "update": 44.720957999999996,
-        "hydrate": 47.720290999999996,
-        "view": 46.089083,
-        "render": 5.2249159999999994,
-        "total": 143.77016700000001
-      }
-    },
-    {
-      "frame": 57,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "0a385e4e-3716-410e-87b3-124fe5d7afc0",
-      "selected_index": 53,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.909,
-        "update": 44.896333,
-        "hydrate": 46.27675,
-        "view": 45.296791000000006,
-        "render": 5.0428749999999996,
-        "total": 141.527542
-      }
-    },
-    {
-      "frame": 58,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "0845f71f-8eae-4c1b-ac35-8cce7424cc27",
-      "selected_index": 54,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.383708,
-        "update": 45.371125,
-        "hydrate": 51.423084,
-        "view": 45.934292,
-        "render": 4.919874999999999,
-        "total": 147.663042
-      }
-    },
-    {
-      "frame": 59,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d336f-2ffc-7641-abad-3cdff9fe8b91",
-      "selected_index": 55,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.277042,
-        "update": 45.26483399999999,
-        "hydrate": 46.955125,
-        "view": 46.614333,
-        "render": 5.040375,
-        "total": 143.88899999999998
-      }
-    },
-    {
-      "frame": 60,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d336c-ffd0-7771-abe1-ec7e500e51d7",
-      "selected_index": 56,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.387125,
-        "update": 45.374583,
-        "hydrate": 47.795790999999994,
-        "view": 46.329625,
-        "render": 5.0735,
-        "total": 144.58837499999998
-      }
-    },
-    {
-      "frame": 61,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d336e-b071-7e33-b37d-057606518705",
-      "selected_index": 57,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 44.742208,
-        "update": 44.727375,
-        "hydrate": 46.781749999999995,
-        "view": 45.490791,
-        "render": 4.862417,
-        "total": 141.87925
-      }
-    },
-    {
-      "frame": 62,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d336d-ec5d-70b1-b2f4-796b7bd2d783",
-      "selected_index": 58,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.496874999999996,
-        "update": 45.482458,
-        "hydrate": 48.502542000000005,
-        "view": 46.649665999999996,
-        "render": 4.910042,
-        "total": 145.56145800000002
-      }
-    },
-    {
-      "frame": 63,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "f71b77d7-01a4-4317-af7a-c94c3290ee87",
-      "selected_index": 59,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.648458000000005,
-        "update": 45.634208,
-        "hydrate": 49.910125,
-        "view": 48.321625,
-        "render": 4.99975,
-        "total": 148.882292
-      }
-    },
-    {
-      "frame": 64,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "1bea0e3d-84e7-4f6f-b022-587ab2de90e9",
-      "selected_index": 60,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.510749999999994,
-        "update": 46.497125,
-        "hydrate": 53.153334,
-        "view": 46.811459,
-        "render": 4.981375,
-        "total": 151.45891699999999
-      }
-    },
-    {
-      "frame": 65,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d32b4-8ccc-7d23-a2d6-0944b64b164f",
-      "selected_index": 61,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.155584,
-        "update": 45.143209,
-        "hydrate": 49.019084,
-        "view": 46.517167,
-        "render": 5.000584,
-        "total": 145.694875
-      }
-    },
-    {
-      "frame": 66,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d32b3-b9aa-7791-bf0e-feb85a5dac90",
-      "selected_index": 62,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.926750000000006,
-        "update": 45.913583,
-        "hydrate": 48.054458000000004,
-        "view": 47.689459,
-        "render": 5.113124999999999,
-        "total": 146.785958
-      }
-    },
-    {
-      "frame": 67,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d32b1-084a-7062-885f-6ab341dac742",
-      "selected_index": 63,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.754875,
-        "update": 46.742042,
-        "hydrate": 48.536625,
-        "view": 46.907458,
-        "render": 4.925625,
-        "total": 147.126792
-      }
-    },
-    {
-      "frame": 68,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3292-9796-7782-ad89-c2e20be5e418",
-      "selected_index": 64,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.611,
-        "update": 46.596542,
-        "hydrate": 48.881667,
-        "view": 46.50125,
-        "render": 5.222334,
-        "total": 147.21875
-      }
-    },
-    {
-      "frame": 69,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "6597d8a9-5d12-4b9e-aa5f-59ab19b76ed6",
-      "selected_index": 65,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 47.105125,
-        "update": 47.091625,
-        "hydrate": 50.125,
-        "view": 46.456875000000004,
-        "render": 5.475292,
-        "total": 149.164833
-      }
-    },
-    {
-      "frame": 70,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3291-7c36-7cb2-b615-3eb3a56430e6",
-      "selected_index": 66,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.419791000000004,
-        "update": 46.406749999999995,
-        "hydrate": 48.968292,
-        "view": 46.365375,
-        "render": 4.873958,
-        "total": 146.629625
-      }
-    },
-    {
-      "frame": 71,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d3290-5149-7ef0-a531-7cabac9acb84",
-      "selected_index": 67,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.358292000000006,
-        "update": 46.345542,
-        "hydrate": 48.479708,
-        "view": 45.842041,
-        "render": 5.215541,
-        "total": 145.89791599999998
-      }
-    },
-    {
-      "frame": 72,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d328f-adc6-79b3-a82f-43612cd0d439",
-      "selected_index": 68,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 46.010459,
-        "update": 45.998333,
-        "hydrate": 51.439458,
-        "view": 46.782083,
-        "render": 4.957959,
-        "total": 149.19233400000002
-      }
-    },
-    {
-      "frame": 73,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d328f-0671-7dc1-af8b-a02a7b4cb621",
-      "selected_index": 69,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.867333,
-        "update": 45.853875,
-        "hydrate": 48.382458,
-        "view": 47.767542000000006,
-        "render": 5.165583,
-        "total": 147.18525
-      }
-    },
-    {
-      "frame": 74,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d328d-a847-7c40-829c-d3a74c283b8a",
-      "selected_index": 70,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 45.637042,
-        "update": 45.624709,
-        "hydrate": 48.233083,
-        "view": 46.954166,
-        "render": 5.142916,
-        "total": 145.969917
-      }
-    },
-    {
-      "frame": 75,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "c787721f-850f-4ff8-8a9f-d6628189b361",
-      "selected_index": 71,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 47.376916,
-        "update": 47.364375,
-        "hydrate": 65.145667,
-        "view": 48.612542000000005,
-        "render": 4.990542,
-        "total": 166.12787500000002
-      }
-    },
-    {
-      "frame": 76,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "19b31f9b-595c-4d57-b632-abb72777e45d",
-      "selected_index": 72,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 48.721875,
-        "update": 48.707542,
-        "hydrate": 52.678999999999995,
-        "view": 50.038291,
-        "render": 6.988042,
-        "total": 158.429583
-      }
-    },
-    {
-      "frame": 77,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "387aad5c-d405-4e62-a863-42e3cb3be572",
-      "selected_index": 73,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 48.023125,
-        "update": 48.010459,
-        "hydrate": 51.476542,
-        "view": 49.023042000000004,
-        "render": 5.229083,
-        "total": 153.754042
-      }
-    },
-    {
-      "frame": 78,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "dda3e8f1-b49e-420e-82e8-6cbca0990a8b",
-      "selected_index": 74,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 47.473292,
-        "update": 47.460333,
-        "hydrate": 48.720833999999996,
-        "view": 49.519166000000006,
-        "render": 5.070125,
-        "total": 150.78575
-      }
-    },
-    {
-      "frame": 79,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "62d3528a-0b1b-477f-95cc-77566a647d05",
-      "selected_index": 75,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 50.030875,
-        "update": 50.016959,
-        "hydrate": 51.528916,
-        "view": 48.389584,
-        "render": 5.0563329999999995,
-        "total": 155.00816600000002
-      }
-    },
-    {
-      "frame": 80,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "3228be7d-54b2-4de5-aef9-ebbddc813a54",
-      "selected_index": 76,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 49.906040999999995,
-        "update": 49.870084,
-        "hydrate": 61.849542,
-        "view": 49.841625,
-        "render": 6.071083,
-        "total": 167.670542
-      }
-    },
-    {
-      "frame": 81,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "54c6d234-dc12-482f-adc2-1eeb881158a0",
-      "selected_index": 77,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.003833,
-        "update": 57.990417,
-        "hydrate": 55.523500000000006,
-        "view": 49.607958,
-        "render": 5.279624999999999,
-        "total": 168.417417
-      }
-    },
-    {
-      "frame": 82,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "c9a768bf-a95b-4cf7-903c-75f56dbf5eae",
-      "selected_index": 78,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 52.204583,
-        "update": 52.191333,
-        "hydrate": 52.411584,
-        "view": 49.32325,
-        "render": 5.250792,
-        "total": 159.19304200000002
-      }
-    },
-    {
-      "frame": 83,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "5d8966b7-7585-44e2-a1f4-e870d5c9d60d",
-      "selected_index": 79,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.728541,
-        "update": 51.71525,
-        "hydrate": 69.54362499999999,
-        "view": 51.413334,
-        "render": 5.16575,
-        "total": 177.853708
-      }
-    },
-    {
-      "frame": 84,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d2126-020f-7181-b5b6-daf7b28481eb",
-      "selected_index": 80,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 50.893958000000005,
-        "update": 50.880541,
-        "hydrate": 55.418333,
-        "view": 53.033917,
-        "render": 5.258958,
-        "total": 164.607375
-      }
-    },
-    {
-      "frame": 85,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d2074-fa51-7060-954d-222b9a0fe8c0",
-      "selected_index": 81,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.170125,
-        "update": 51.156375,
-        "hydrate": 55.011083,
-        "view": 51.376875000000005,
-        "render": 5.095332999999999,
-        "total": 162.655709
-      }
-    },
-    {
-      "frame": 86,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "61f05504-f1ee-4e71-aa8e-f4a8822b676c",
-      "selected_index": 82,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.370625000000004,
-        "update": 51.35725,
-        "hydrate": 52.123416999999996,
-        "view": 52.532292,
-        "render": 5.385625,
-        "total": 161.41449999999998
-      }
-    },
-    {
-      "frame": 87,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d200c-d84d-7bf3-bde8-01104ee7a8b5",
-      "selected_index": 83,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.725375,
-        "update": 51.712541,
-        "hydrate": 55.349584,
-        "view": 51.772666,
-        "render": 5.0436250000000005,
-        "total": 163.893333
-      }
-    },
-    {
-      "frame": 88,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019d200b-dc01-7190-9c7c-b45e6df2f140",
-      "selected_index": 84,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.698542,
-        "update": 51.684917,
-        "hydrate": 53.0255,
-        "view": 53.215125,
-        "render": 5.357542,
-        "total": 163.298959
-      }
-    },
-    {
-      "frame": 89,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "3c6a7d04-f453-4c41-bfd3-54af5fa5d9a7",
-      "selected_index": 85,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.647666,
-        "update": 51.634667,
-        "hydrate": 54.908166,
-        "view": 51.458999999999996,
-        "render": 5.085708,
-        "total": 163.102875
-      }
-    },
-    {
-      "frame": 90,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "cef25196-5803-4ab7-b2b8-bfc1c1e9aebd",
-      "selected_index": 86,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 52.365292000000004,
-        "update": 52.352875,
-        "hydrate": 53.8625,
-        "view": 51.303042,
-        "render": 5.166542,
-        "total": 162.699875
-      }
-    },
-    {
-      "frame": 91,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "c8042ed0-411a-4cd2-b2dd-fc616f40c977",
-      "selected_index": 87,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 51.8195,
-        "update": 51.806834,
-        "hydrate": 54.28725,
-        "view": 51.241583,
-        "render": 5.161625000000001,
-        "total": 162.512375
-      }
-    },
-    {
-      "frame": 92,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "b7b21212-fb4f-45c1-bcc9-c25a34f265ce",
-      "selected_index": 88,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 53.297333,
-        "update": 53.28375,
-        "hydrate": 77.56475,
-        "view": 54.769458,
-        "render": 5.282667,
-        "total": 190.916292
-      }
-    },
-    {
-      "frame": 93,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "47320e66-5d84-4d72-b3fa-21084d457394",
-      "selected_index": 89,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 54.059334,
-        "update": 54.045708,
-        "hydrate": 55.382875,
-        "view": 53.847792,
-        "render": 5.367125000000001,
-        "total": 168.659291
-      }
-    },
-    {
-      "frame": 94,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "db2b76d7-bd5a-4cae-b34c-de1784badc41",
-      "selected_index": 90,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 55.563083,
-        "update": 55.550333,
-        "hydrate": 73.473917,
-        "view": 58.582041000000004,
-        "render": 5.565666,
-        "total": 193.187042
-      }
-    },
-    {
-      "frame": 95,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "09ae973c-b9b3-4080-b520-f6239419715b",
-      "selected_index": 91,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 54.758,
-        "update": 54.745625,
-        "hydrate": 58.643083999999995,
-        "view": 55.621292000000004,
-        "render": 5.044042,
-        "total": 174.06875
-      }
-    },
-    {
-      "frame": 96,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "7b5260b9-3d3a-49d9-989e-946fd1d00122",
-      "selected_index": 92,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 56.730250000000005,
-        "update": 56.717583000000005,
-        "hydrate": 80.768125,
-        "view": 57.660875,
-        "render": 5.009874999999999,
-        "total": 200.171458
-      }
-    },
-    {
-      "frame": 97,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019ca9c3-e67e-7952-b3c5-11873607e208",
-      "selected_index": 93,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.084458,
-        "update": 58.071042000000006,
-        "hydrate": 79.191334,
-        "view": 58.769915999999995,
-        "render": 5.186083,
-        "total": 201.233959
-      }
-    },
-    {
-      "frame": 98,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a1e-bb73-7e03-9c54-017161cf32e7",
-      "selected_index": 94,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.337167,
-        "update": 59.323625,
-        "hydrate": 64.918417,
-        "view": 59.108333,
-        "render": 5.068708,
-        "total": 188.434917
-      }
-    },
-    {
-      "frame": 99,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.964875,
-        "update": 59.949667,
-        "hydrate": 61.1095,
-        "view": 58.857708,
-        "render": 5.385041999999999,
-        "total": 185.319375
-      }
-    },
-    {
-      "frame": 100,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.3485,
-        "update": 60.335333,
-        "hydrate": 60.732791,
-        "view": 62.174708,
-        "render": 5.0389170000000005,
-        "total": 188.297292
-      }
-    },
-    {
-      "frame": 101,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.330167,
-        "update": 59.315374999999996,
-        "hydrate": 60.609625,
-        "view": 59.683333999999995,
-        "render": 4.777208,
-        "total": 184.402833
-      }
-    },
-    {
-      "frame": 102,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.627834,
-        "update": 58.614375,
-        "hydrate": 59.428042,
-        "view": 58.609083999999996,
-        "render": 5.148084,
-        "total": 181.815334
-      }
-    },
-    {
-      "frame": 103,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.72770800000001,
-        "update": 58.715375,
-        "hydrate": 59.777583,
-        "view": 59.368917,
-        "render": 4.887708,
-        "total": 182.76387499999998
-      }
-    },
-    {
-      "frame": 104,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.970541000000004,
-        "update": 58.957207999999994,
-        "hydrate": 59.211666,
-        "view": 59.64575,
-        "render": 4.8158330000000005,
-        "total": 182.64654199999998
-      }
-    },
-    {
-      "frame": 105,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.2325,
-        "update": 59.2175,
-        "hydrate": 59.429375,
-        "view": 60.500583,
-        "render": 5.1704159999999995,
-        "total": 184.33525
-      }
-    },
-    {
-      "frame": 106,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.598458,
-        "update": 58.584583,
-        "hydrate": 58.946667,
-        "view": 59.193417,
-        "render": 5.010833,
-        "total": 181.751958
-      }
-    },
-    {
-      "frame": 107,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.19725,
-        "update": 59.184875,
-        "hydrate": 58.647042000000006,
-        "view": 60.241083,
-        "render": 4.785542,
-        "total": 182.873334
-      }
-    },
-    {
-      "frame": 108,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.09775,
-        "update": 58.084333,
-        "hydrate": 58.647541,
-        "view": 59.945958,
-        "render": 4.914542,
-        "total": 181.608375
-      }
-    },
-    {
-      "frame": 109,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.2545,
-        "update": 59.241459000000006,
-        "hydrate": 58.341167,
-        "view": 59.871166,
-        "render": 4.828875,
-        "total": 182.298084
-      }
-    },
-    {
-      "frame": 110,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.312291,
-        "update": 59.296707999999995,
-        "hydrate": 60.023458000000005,
-        "view": 59.476917,
-        "render": 5.05975,
-        "total": 183.874333
-      }
-    },
-    {
-      "frame": 111,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.708792,
-        "update": 58.692083,
-        "hydrate": 58.984458,
-        "view": 59.086583,
-        "render": 4.7302919999999995,
-        "total": 181.512166
-      }
-    },
-    {
-      "frame": 112,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.4045,
-        "update": 58.392375,
-        "hydrate": 59.554417,
-        "view": 59.103125,
-        "render": 4.835624999999999,
-        "total": 181.9005
-      }
-    },
-    {
-      "frame": 113,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 57.829125000000005,
-        "update": 57.815791999999995,
-        "hydrate": 59.535667000000004,
-        "view": 58.896916,
-        "render": 5.392,
-        "total": 181.656333
-      }
-    },
-    {
-      "frame": 114,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.393667,
-        "update": 59.381292,
-        "hydrate": 59.465709,
-        "view": 59.533958,
-        "render": 4.724458,
-        "total": 183.120458
-      }
-    },
-    {
-      "frame": 115,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.74625,
-        "update": 59.733374999999995,
-        "hydrate": 58.909667,
-        "view": 59.55875,
-        "render": 5.055542,
-        "total": 183.272458
-      }
-    },
-    {
-      "frame": 116,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 61.624208,
-        "update": 61.611458,
-        "hydrate": 59.07075,
-        "view": 59.098417,
-        "render": 4.70875,
-        "total": 184.504167
-      }
-    },
-    {
-      "frame": 117,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.904625,
-        "update": 58.891791999999995,
-        "hydrate": 61.680166,
-        "view": 60.3005,
-        "render": 4.884333,
-        "total": 185.77325
-      }
-    },
-    {
-      "frame": 118,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.321791,
-        "update": 59.309041,
-        "hydrate": 59.409334,
-        "view": 59.850916999999995,
-        "render": 4.791250000000001,
-        "total": 183.375667
-      }
-    },
-    {
-      "frame": 119,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.845584,
-        "update": 58.833499999999994,
-        "hydrate": 59.061667,
-        "view": 59.323375,
-        "render": 4.759875,
-        "total": 181.99295800000002
-      }
-    },
-    {
-      "frame": 120,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.488166,
-        "update": 59.475333,
-        "hydrate": 57.940290999999995,
-        "view": 59.138166999999996,
-        "render": 4.872083,
-        "total": 181.441083
-      }
-    },
-    {
-      "frame": 121,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.203584,
-        "update": 60.190542,
-        "hydrate": 58.45575,
-        "view": 58.780832999999994,
-        "render": 4.974792,
-        "total": 182.417291
-      }
-    },
-    {
-      "frame": 122,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.868666,
-        "update": 58.855708,
-        "hydrate": 58.068000000000005,
-        "view": 58.356458,
-        "render": 4.856584,
-        "total": 180.15175
-      }
-    },
-    {
-      "frame": 123,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.52475,
-        "update": 58.512167,
-        "hydrate": 59.584291,
-        "view": 58.892209,
-        "render": 5.1035,
-        "total": 182.10679199999998
-      }
-    },
-    {
-      "frame": 124,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.815833,
-        "update": 58.802625,
-        "hydrate": 59.484458,
-        "view": 59.923249999999996,
-        "render": 4.814917,
-        "total": 183.040709
-      }
-    },
-    {
-      "frame": 125,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.519666,
-        "update": 58.504042,
-        "hydrate": 60.409334,
-        "view": 58.513957999999995,
-        "render": 4.801208000000001,
-        "total": 182.246125
-      }
-    },
-    {
-      "frame": 126,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.272167,
-        "update": 58.259458,
-        "hydrate": 58.968582999999995,
-        "view": 58.479542,
-        "render": 4.8495,
-        "total": 180.572292
-      }
-    },
-    {
-      "frame": 127,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.648459,
-        "update": 58.635292,
-        "hydrate": 59.460583,
-        "view": 59.7735,
-        "render": 4.909125,
-        "total": 182.794291
-      }
-    },
-    {
-      "frame": 128,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.872,
-        "update": 58.85925,
-        "hydrate": 59.72425,
-        "view": 59.335125000000005,
-        "render": 4.8829590000000005,
-        "total": 182.816792
-      }
-    },
-    {
-      "frame": 129,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.558333,
-        "update": 58.54475,
-        "hydrate": 59.338750000000005,
-        "view": 59.887459,
-        "render": 4.831209,
-        "total": 182.61787500000003
-      }
-    },
-    {
-      "frame": 130,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.208458,
-        "update": 59.194042,
-        "hydrate": 58.311457999999995,
-        "view": 59.377375,
-        "render": 4.879791,
-        "total": 181.779375
-      }
-    },
-    {
-      "frame": 131,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.654125,
-        "update": 58.641292,
-        "hydrate": 58.983374999999995,
-        "view": 59.479125,
-        "render": 4.669667,
-        "total": 181.788291
-      }
-    },
-    {
-      "frame": 132,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.628875,
-        "update": 59.616666,
-        "hydrate": 58.682666000000005,
-        "view": 59.53062499999999,
-        "render": 4.758209,
-        "total": 182.60237500000002
-      }
-    },
-    {
-      "frame": 133,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.492959,
-        "update": 59.474875000000004,
-        "hydrate": 60.936,
-        "view": 59.812084,
-        "render": 5.025042,
-        "total": 185.268291
-      }
-    },
-    {
-      "frame": 134,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.214417,
-        "update": 60.200291,
-        "hydrate": 60.619666,
-        "view": 60.892917,
-        "render": 5.052625,
-        "total": 186.782167
-      }
-    },
-    {
-      "frame": 135,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.1205,
-        "update": 58.106457999999996,
-        "hydrate": 58.82875,
-        "view": 60.001666,
-        "render": 4.961792,
-        "total": 181.91495899999998
-      }
-    },
-    {
-      "frame": 136,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.336708,
-        "update": 58.324084,
-        "hydrate": 58.920624999999994,
-        "view": 59.680959,
-        "render": 4.9001660000000005,
-        "total": 181.840792
-      }
-    },
-    {
-      "frame": 137,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.500625,
-        "update": 58.487333,
-        "hydrate": 59.120375,
-        "view": 59.279209,
-        "render": 5.056625,
-        "total": 181.959083
-      }
-    },
-    {
-      "frame": 138,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.279667,
-        "update": 60.266291,
-        "hydrate": 59.710333,
-        "view": 59.307791,
-        "render": 5.016917,
-        "total": 184.316958
-      }
-    },
-    {
-      "frame": 139,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.618792,
-        "update": 59.605625,
-        "hydrate": 60.913250000000005,
-        "view": 59.98524999999999,
-        "render": 4.907084,
-        "total": 185.426542
-      }
-    },
-    {
-      "frame": 140,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.772833,
-        "update": 58.75975,
-        "hydrate": 59.865500000000004,
-        "view": 60.141792,
-        "render": 4.910417000000001,
-        "total": 183.692834
-      }
-    },
-    {
-      "frame": 141,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 59.363292,
-        "update": 59.3485,
-        "hydrate": 58.257875,
-        "view": 59.458375000000004,
-        "render": 4.666042,
-        "total": 181.747667
-      }
-    },
-    {
-      "frame": 142,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.104292,
-        "update": 58.091834,
-        "hydrate": 58.96125,
-        "view": 58.695083000000004,
-        "render": 4.757334,
-        "total": 180.520209
-      }
-    },
-    {
-      "frame": 143,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.702083,
-        "update": 58.655584,
-        "hydrate": 58.777875,
-        "view": 59.921875,
-        "render": 4.91675,
-        "total": 182.320709
-      }
-    },
-    {
-      "frame": 144,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.092167,
-        "update": 58.079667,
-        "hydrate": 58.84570900000001,
-        "view": 58.698709,
-        "render": 4.824333,
-        "total": 180.46308299999998
-      }
-    },
-    {
-      "frame": 145,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.557583,
-        "update": 58.540457999999994,
-        "hydrate": 58.296583,
-        "view": 60.191708,
-        "render": 4.84425,
-        "total": 181.89266700000002
-      }
-    },
-    {
-      "frame": 146,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.280125,
-        "update": 60.266583999999995,
-        "hydrate": 59.225,
-        "view": 59.209375,
-        "render": 4.893167,
-        "total": 183.609916
-      }
-    },
-    {
-      "frame": 147,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 58.892374999999994,
-        "update": 58.879291,
-        "hydrate": 58.617000000000004,
-        "view": 59.4535,
-        "render": 4.775792,
-        "total": 181.740791
-      }
-    },
-    {
-      "frame": 148,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
-      "key_code": "Down",
-      "input_outcome": "event",
-      "durations_ms": {
-        "poll_wait": 60.338833,
-        "update": 60.32525,
-        "hydrate": 58.777416,
-        "view": 59.121,
-        "render": 4.984125,
-        "total": 183.2235
-      }
-    },
-    {
-      "frame": 149,
-      "title": "Conversations in '~/unbody/bookmarking'",
-      "breadcrumb": "Workspaces > ~/unbody/bookmarking",
-      "filter_text": "Filter: All Providers [F to cycle] | [e/l] Expand  [Enter] Read",
-      "active_id": "019c9a12-5420-7233-9838-20dad42884e5",
-      "selected_index": 95,
-      "terminal_cells": 7788,
+      "terminal_cells": 1920,
       "key_code": "q",
       "input_outcome": "quit",
       "durations_ms": {
-        "poll_wait": 0.025542,
+        "poll_wait": 0.000959,
         "update": 0.0,
-        "hydrate": 57.656082999999995,
-        "view": 59.027791,
-        "render": 4.957125,
-        "total": 121.668875
+        "hydrate": 0.168958,
+        "view": 0.856917,
+        "render": 1.7298339999999999,
+        "total": 2.7585420000000003
       }
     }
   ]

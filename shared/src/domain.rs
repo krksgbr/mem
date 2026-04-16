@@ -118,6 +118,22 @@ pub fn parse_claude_scaffold_artifact(content: &str) -> Option<ClaudeScaffoldArt
     (artifacts.len() == 1).then_some(artifacts[0])
 }
 
+fn parse_codex_shell_command_text(content: &str) -> Option<&str> {
+    let trimmed = content.trim();
+    let rest = trimmed.strip_prefix("<user_shell_command>")?.trim_start();
+    let rest = rest.strip_suffix("</user_shell_command>")?.trim_end();
+    let command_block = rest.strip_prefix("<command>")?;
+    let (command, suffix) = command_block.split_once("</command>")?;
+    let suffix = suffix.trim();
+    let suffix_ok = suffix.is_empty()
+        || (suffix.starts_with("<result>") && suffix.ends_with("</result>"));
+    suffix_ok.then_some(command.trim()).filter(|command| !command.is_empty())
+}
+
+fn is_codex_shell_command_only(content: &str) -> bool {
+    parse_codex_shell_command_text(content).is_some()
+}
+
 fn is_claude_scaffold_only(content: &str) -> bool {
     parse_claude_scaffold_sequence(content).is_some()
 }
@@ -204,11 +220,91 @@ fn displayable_claude_scaffold_text(content: &str) -> Option<String> {
     }
 }
 
+fn is_bare_structural_tag_line(line: &str) -> bool {
+    let trimmed = line.trim();
+    if !trimmed.starts_with('<') || !trimmed.ends_with('>') {
+        return false;
+    }
+
+    let inner = &trimmed[1..trimmed.len() - 1];
+    let inner = inner.strip_prefix('/').unwrap_or(inner).trim();
+    if inner.is_empty() || inner.contains(char::is_whitespace) {
+        return false;
+    }
+
+    inner
+        .chars()
+        .all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' || ch == ':')
+}
+
+fn is_non_substantive_status_line(line: &str) -> bool {
+    matches!(
+        line.trim(),
+        "[Request interrupted by user for tool use]"
+            | "[Request interrupted by user]"
+            | "[Interrupted]"
+    )
+}
+
+fn strip_leading_structural_tags(line: &str) -> &str {
+    let mut rest = line.trim();
+
+    loop {
+        if !rest.starts_with('<') {
+            return rest;
+        }
+
+        let Some(close_idx) = rest.find('>') else {
+            return rest;
+        };
+        let tag = &rest[..=close_idx];
+        if !is_bare_structural_tag_line(tag) {
+            return rest;
+        }
+
+        rest = rest[close_idx + 1..].trim_start();
+    }
+}
+
+fn strip_trailing_structural_tags(line: &str) -> &str {
+    let mut rest = line.trim();
+
+    loop {
+        if !rest.ends_with('>') {
+            return rest;
+        }
+
+        let Some(open_idx) = rest.rfind('<') else {
+            return rest;
+        };
+        let tag = &rest[open_idx..];
+        if !is_bare_structural_tag_line(tag) {
+            return rest;
+        }
+
+        rest = rest[..open_idx].trim_end();
+    }
+}
+
 fn first_meaningful_line(content: &str) -> Option<&str> {
+    if is_codex_shell_command_only(content) {
+        return None;
+    }
     content
         .lines()
         .map(str::trim)
-        .find(|line| !line.is_empty() && !is_claude_scaffold_only(line))
+        .filter(|line| {
+            !line.is_empty()
+                && !is_claude_scaffold_only(line)
+                && !is_non_substantive_status_line(line)
+        })
+        .map(strip_leading_structural_tags)
+        .map(strip_trailing_structural_tags)
+        .find(|line| {
+            !line.is_empty()
+                && !is_bare_structural_tag_line(line)
+                && !is_non_substantive_status_line(line)
+        })
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -338,10 +434,11 @@ impl Conversation {
                 self.preview.as_deref().and_then(|preview| {
                     if is_claude_scaffold_only(preview)
                         || starts_with_claude_scaffold_prefix(preview)
+                        || is_bare_structural_tag_line(preview.trim())
                     {
                         None
                     } else {
-                        Some(preview)
+                        first_meaningful_line(preview)
                     }
                 })
             })
@@ -353,8 +450,13 @@ impl Conversation {
                 if let Some(displayable) = displayable_claude_scaffold_text(title) {
                     return displayable;
                 }
-                if !is_claude_scaffold_only(title) && !starts_with_claude_scaffold_prefix(title) {
-                    return title.clone();
+                if !is_claude_scaffold_only(title)
+                    && !starts_with_claude_scaffold_prefix(title)
+                    && !is_bare_structural_tag_line(title.trim())
+                {
+                    if let Some(line) = first_meaningful_line(title) {
+                        return line.to_string();
+                    }
                 }
             }
         }
@@ -368,11 +470,51 @@ impl Conversation {
                     .find_map(|message| displayable_claude_scaffold_text(&message.content))
             })
             .or_else(|| {
+                self.messages
+                    .iter()
+                    .filter(|message| message.kind == MessageKind::UserMessage)
+                    .find_map(|message| parse_codex_shell_command_text(&message.content))
+                    .map(str::to_string)
+            })
+            .or_else(|| {
                 self.preview
                     .as_deref()
                     .and_then(displayable_claude_scaffold_text)
             })
             .unwrap_or_else(|| self.id.clone())
+    }
+
+    pub fn opening_prompt_text(&self) -> Option<String> {
+        self.meaningful_user_lines().next().map(str::to_string)
+    }
+
+    pub fn early_user_context_text(&self) -> Option<String> {
+        let lines = self.meaningful_user_lines().take(3).collect::<Vec<_>>();
+        (!lines.is_empty()).then(|| lines.join(" "))
+    }
+
+    pub fn latest_activity_line(&self) -> Option<&str> {
+        self.messages
+            .iter()
+            .rev()
+            .find_map(first_non_empty_line)
+            .or_else(|| self.preview_line())
+    }
+
+    fn meaningful_user_lines(&self) -> impl Iterator<Item = &str> {
+        self.messages
+            .iter()
+            .filter(|message| message.kind == MessageKind::UserMessage)
+            .filter_map(first_non_empty_line)
+            .scan(None, |last: &mut Option<String>, line| {
+                if last.as_deref() == Some(line) {
+                    Some(None)
+                } else {
+                    *last = Some(line.to_string());
+                    Some(Some(line))
+                }
+            })
+            .flatten()
     }
 }
 
@@ -391,6 +533,9 @@ fn first_non_empty_line(message: &Message) -> Option<&str> {
         return Some(line);
     }
     if is_claude_scaffold_only(&message.content) {
+        return None;
+    }
+    if is_codex_shell_command_only(&message.content) {
         return None;
     }
     None
@@ -655,6 +800,86 @@ mod tests {
     }
 
     #[test]
+    fn preview_line_skips_bare_structural_tags() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: None,
+            preview: Some("<role>\nYou are Codex.\n</role>".into()),
+            provider: ProviderKind::Codex,
+            created_at: 0,
+            updated_at: 0,
+            segments: Vec::new(),
+            messages: vec![message(
+                Participant::User,
+                "<role>\nYou are Codex.\n</role>",
+            )],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(conversation.preview_line(), Some("You are Codex."));
+        assert_eq!(conversation.display_title(), "You are Codex.");
+    }
+
+    #[test]
+    fn display_title_ignores_bare_tag_only_title() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: Some("<role>".into()),
+            preview: Some("<role>\nReview the diff.\n</role>".into()),
+            provider: ProviderKind::Codex,
+            created_at: 0,
+            updated_at: 0,
+            segments: Vec::new(),
+            messages: vec![message(
+                Participant::User,
+                "<role>\nReview the diff.\n</role>",
+            )],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(conversation.display_title(), "Review the diff.");
+    }
+
+    #[test]
+    fn preview_line_strips_leading_structural_tags_from_inline_text() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: None,
+            preview: Some("<context>User initiated a review task.</context>".into()),
+            provider: ProviderKind::Codex,
+            created_at: 0,
+            updated_at: 0,
+            segments: Vec::new(),
+            messages: vec![message(
+                Participant::User,
+                "<context>User initiated a review task.</context>",
+            )],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(
+            conversation.preview_line(),
+            Some("User initiated a review task.")
+        );
+        assert_eq!(
+            conversation.display_title(),
+            "User initiated a review task."
+        );
+    }
+
+    #[test]
     fn preview_line_skips_multiline_scaffold_message_and_uses_next_user_message() {
         let conversation = Conversation {
             id: "conv-1".into(),
@@ -680,5 +905,180 @@ mod tests {
 
         assert_eq!(conversation.preview_line(), Some("Actual prompt"));
         assert_eq!(conversation.display_title(), "Actual prompt");
+    }
+
+    #[test]
+    fn preview_line_skips_request_interrupted_status_lines() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: Some("lightdash-weekly-analytics-dashboard".into()),
+            preview: None,
+            provider: ProviderKind::ClaudeCode,
+            created_at: 0,
+            updated_at: 0,
+            segments: vec![],
+            messages: vec![
+                message(Participant::User, "[Request interrupted by user for tool use]"),
+                message(
+                    Participant::User,
+                    "We need programmatic access to a Lightdash instance running on Cloud Run behind IAP.",
+                ),
+            ],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(
+            conversation.preview_line(),
+            Some("We need programmatic access to a Lightdash instance running on Cloud Run behind IAP.")
+        );
+        assert_eq!(
+            conversation.display_title(),
+            "lightdash-weekly-analytics-dashboard"
+        );
+    }
+
+    #[test]
+    fn display_title_skips_codex_shell_command_wrapper_when_prose_follows() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: None,
+            preview: None,
+            provider: ProviderKind::Codex,
+            created_at: 0,
+            updated_at: 0,
+            segments: vec![],
+            messages: vec![
+                message(
+                    Participant::User,
+                    "<user_shell_command>\n<command>\nwhich lightdash\n</command>\n<result>\nExit code: 1\n</result>\n</user_shell_command>",
+                ),
+                message(
+                    Participant::User,
+                    "let's debug your environment. lightdash is available in my shell.",
+                ),
+            ],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(
+            conversation.preview_line(),
+            Some("let's debug your environment. lightdash is available in my shell.")
+        );
+        assert_eq!(
+            conversation.display_title(),
+            "let's debug your environment. lightdash is available in m..."
+        );
+        assert_eq!(
+            conversation.opening_prompt_text().as_deref(),
+            Some("let's debug your environment. lightdash is available in my shell.")
+        );
+    }
+
+    #[test]
+    fn display_title_falls_back_to_codex_shell_command_for_command_only_session() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: None,
+            preview: None,
+            provider: ProviderKind::Codex,
+            created_at: 0,
+            updated_at: 0,
+            segments: vec![],
+            messages: vec![message(
+                Participant::User,
+                "<user_shell_command>\n<command>\nwhich lightdash\n</command>\n<result>\nExit code: 0\n</result>\n</user_shell_command>",
+            )],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(conversation.preview_line(), None);
+        assert_eq!(conversation.display_title(), "which lightdash");
+    }
+
+    #[test]
+    fn latest_activity_line_prefers_last_meaningful_message() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: Some("Initial topic".into()),
+            preview: Some("Initial topic".into()),
+            provider: ProviderKind::ClaudeCode,
+            created_at: 0,
+            updated_at: 0,
+            segments: Vec::new(),
+            messages: vec![
+                message(Participant::User, "Initial topic"),
+                message(
+                    Participant::Assistant {
+                        provider: ProviderKind::ClaudeCode,
+                    },
+                    "First response",
+                ),
+                message(Participant::User, "Most recent follow-up"),
+            ],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(conversation.latest_activity_line(), Some("Most recent follow-up"));
+    }
+
+    #[test]
+    fn opening_prompt_and_early_context_use_first_meaningful_user_lines() {
+        let conversation = Conversation {
+            id: "conv-1".into(),
+            external_id: None,
+            branch_parent_id: None,
+            branch_anchor_message_id: None,
+            title: Some("sticky-note".into()),
+            preview: None,
+            provider: ProviderKind::ClaudeCode,
+            created_at: 0,
+            updated_at: 0,
+            segments: vec![],
+            messages: vec![
+                message(Participant::User, "<command-name>/clear</command-name>"),
+                message(
+                    Participant::User,
+                    "Some websites seem to get classified as thought.",
+                ),
+                message(
+                    Participant::Assistant {
+                        provider: ProviderKind::ClaudeCode,
+                    },
+                    "I’ll investigate.",
+                ),
+                message(Participant::User, "Check item 123."),
+                message(Participant::User, "Check item 123."),
+                message(Participant::User, "Compare it to sticky-note behavior."),
+            ],
+            is_hydrated: true,
+            load_ref: None,
+        };
+
+        assert_eq!(
+            conversation.opening_prompt_text().as_deref(),
+            Some("Some websites seem to get classified as thought.")
+        );
+        assert_eq!(
+            conversation.early_user_context_text().as_deref(),
+            Some(
+                "Some websites seem to get classified as thought. Check item 123. Compare it to sticky-note behavior."
+            )
+        );
     }
 }

@@ -59,3 +59,39 @@
 - Failure mode: applying `Event::SetWorkspaces` after background sync unconditionally reset the app to `Screen::Workspaces { selected_workspace: 0 }`, which made the UI "bounce" back to home after a delayed refresh.
 - Detection signal: the user consistently observed the app returning to the workspace screen after roughly the background-sync completion window, and the core update handler showed `SetWorkspaces` hard-resetting the screen regardless of current navigation state.
 - Prevention rule: background data refresh events must preserve current navigation context by stable workspace/conversation/message identity whenever possible; never treat a snapshot refresh as an implicit navigation reset.
+
+- Failure mode: I let the conversation browser hydrate the currently selected conversation during ordinary list navigation, which turned simple up/down movement into transcript preloading and made large workspaces feel sluggish.
+- Detection signal: interactive profiles on the conversations screen showed `hydrate` and `view` dominating each Down key even though the browser was only showing conversation lineage, not transcript content.
+- Prevention rule: collapsed browse surfaces must not trigger transcript hydration on selection change; only detail views or explicitly expanded structures should pay the load cost.
+
+- Failure mode: I persisted raw provider `title`/`preview` fields into the SQLite index even when the domain-level title derivation would have sanitized or skipped structural wrapper tags like `<role>`, so the browser showed placeholder markup as conversation labels.
+- Detection signal: a real Codex conversation list rendered many rows as `<role>`, while `read` showed the first actual prompt line immediately after that wrapper tag.
+- Prevention rule: when storing indexed conversation summaries, persist the same derived title/preview semantics the browser uses at runtime; do not let raw provider metadata bypass normalization rules.
+
+- Failure mode: I implemented Claude thinking extraction against the wrong field (`text`) even though the real transcript shape stores reasoning text under `thinking`, so the rebuilt index still contained zero `thinking` entries.
+- Detection signal: a raw Claude JSONL line clearly contained `{"type":"thinking","thinking":"..."}`, but SQLite `conversation_entry` counts for that session still showed only `assistant_message`, `user_message`, and `metadata_change`.
+- Prevention rule: when normalizing provider-specific blocks, verify the exact raw field names against real transcript samples before declaring the importer done.
+
+- Failure mode: I assumed a usability-trial agent's qualitative account of search ranking was accurate, but the built-in trace showed the chosen conversation was ranked 10th, not first, and the trace itself did not include enough result context to audit that discrepancy without replaying the query.
+- Detection signal: the trial report said the correct Lightdash setup conversation was the top result, while `trial-trace.jsonl` plus a direct `search lightdash --limit 10` replay showed different top-ranked conversations and the target thread at rank 10.
+- Prevention rule: when instrumenting search usability trials, capture enough result context in the trace to audit the agent's claims directly (at least top result titles/snippets or stable rank positions), rather than relying on self-report alone.
+
+- Failure mode: the `read` CLI required users to remember an internal `--conversation` selector shape even though the surrounding workflow starts from search results and human-recognizable titles, which made transcript inspection feel harder than it needed to.
+- Detection signal: multiple usability-trial agents reported that `read` syntax was opaque or non-obvious, despite already having enough information from search output to identify the target conversation.
+- Prevention rule: follow-up inspection commands should accept the most natural selectors already visible in the product surface, and they should expose built-in help/examples rather than forcing users to reconstruct internal identifier syntax from memory.
+
+- Failure mode: I spent time tuning SQLite FTS ranking and query tiers before verifying that the FTS table was actually returning stored conversation context; the table was still configured as contentless, so the context columns came back blank and the product was often falling through to weaker `LIKE` behavior.
+- Detection signal: direct SQLite inspection showed `conversation_fts` rows matching queries but returning empty `conversation_id` / `entry_id` / snippet context, while conversation search missed cases that should have been easy lexical wins (`sticky note`) until the schema was changed to a normal stored FTS table.
+- Prevention rule: when iterating on search quality, first verify that the retrieval path is genuinely active end-to-end on real data (stored fields, snippets, ids, ranking source) before tuning weights or query construction.
+
+- Failure mode: I let Codex `<user_shell_command>` wrappers participate in conversation title/preview/opening-prompt derivation as if they were ordinary user-authored prose, which caused shell-debug sessions like `which lightdash` to outrank the actual topical conversation for broad project-scoped queries.
+- Detection signal: the scoped query `a couple days ago we discussed lightdash in sibyl-memory-mvp` returned a command-wrapper conversation at rank 1 until the shared domain model was inspected against the real transcript and the wrapper shape was made explicit.
+- Prevention rule: treat provider-specific command wrappers as low-signal structural artifacts for summary derivation; only fall back to their command text when a conversation is truly command-only.
+
+- Failure mode: I initially treated artifact-like queries as only punctuation-shaped tokens (dotted identifiers, paths, flags, slash commands), which meant CamelCase technical identifiers such as `VZBridgedNetworkDeviceAttachment` were neither indexed as artifacts nor eligible for artifact typo correction.
+- Detection signal: the exact query `VZBridgedNetworkDeviceAttachment` found the right `nix-darvm` conversation, but the light typo variant `VZBridgdNetworkDeviceAttachment` returned no results at all.
+- Prevention rule: artifact extraction and artifact-query routing must cover CamelCase/PascalCase technical identifiers in addition to punctuation-shaped tokens; otherwise typo handling silently excludes a common class of technical terms.
+
+- Failure mode: I treated explicit workspace mentions like `in sibyl-memory-mvp` as only a soft ranking hint, and I also let the workspace name leak into artifact-term extraction. That let scoped searches rank on the project name itself instead of the actual topic/artifact.
+- Detection signal: scoped queries such as `servicusage.services.use in sibyl-memory-mvp` and `a couple days ago we discussed lightdash in sibyl-memory-mvp` returned in-workspace results, but the top hits were initially dominated by irrelevant conversations whose only strong match was the workspace token.
+- Prevention rule: when a search query explicitly names a workspace/project, use it as a hard filter and strip that workspace token family from all lexical/artifact query terms before ranking.

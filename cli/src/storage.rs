@@ -5,7 +5,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-const SCHEMA_VERSION: i32 = 7;
+const SCHEMA_VERSION: i32 = 21;
+const PROD_STATE_NAMESPACE: &str = "transcript-browser";
+const DEV_STATE_NAMESPACE: &str = "transcript-browser-dev";
 
 const SCHEMA_STATEMENTS: &[&str] = &[
     r#"
@@ -100,12 +102,35 @@ const SCHEMA_STATEMENTS: &[&str] = &[
     )
     "#,
     r#"
+    CREATE TABLE IF NOT EXISTS artifact_lexicon (
+        term TEXT PRIMARY KEY,
+        doc_freq INTEGER NOT NULL
+    )
+    "#,
+    r#"
     CREATE VIRTUAL TABLE IF NOT EXISTS conversation_fts USING fts5(
         entry_id UNINDEXED,
         conversation_id UNINDEXED,
+        title_text,
+        preview_text,
+        opening_prompt_text,
+        early_user_context_text,
+        artifact_text,
         search_text,
-        content='',
         tokenize='unicode61'
+    )
+    "#,
+    r#"
+    CREATE VIRTUAL TABLE IF NOT EXISTS conversation_fts_nl USING fts5(
+        entry_id UNINDEXED,
+        conversation_id UNINDEXED,
+        title_text,
+        preview_text,
+        opening_prompt_text,
+        early_user_context_text,
+        artifact_text,
+        search_text,
+        tokenize='porter unicode61'
     )
     "#,
     "CREATE INDEX IF NOT EXISTS idx_conversation_workspace_updated ON conversation(workspace_id, updated_at_ms DESC)",
@@ -123,6 +148,8 @@ const SCHEMA_STATEMENTS: &[&str] = &[
 
 const DROP_STATEMENTS: &[&str] = &[
     "DROP TABLE IF EXISTS conversation_fts",
+    "DROP TABLE IF EXISTS conversation_fts_nl",
+    "DROP TABLE IF EXISTS artifact_lexicon",
     "DROP TABLE IF EXISTS entry_label",
     "DROP TABLE IF EXISTS entry_block",
     "DROP TABLE IF EXISTS conversation_entry",
@@ -138,7 +165,9 @@ pub struct Storage {
 
 impl Storage {
     pub fn open_default() -> Result<Self> {
-        Self::open(default_index_path()?)
+        let path = default_index_path()?;
+        ensure_parent_dir(&path)?;
+        Self::open(path)
     }
 
     pub fn open<P>(path: P) -> Result<Self>
@@ -242,6 +271,12 @@ fn apply_schema_to_connection(connection: &Connection) -> Result<()> {
 
 pub fn ensure_default_index() -> Result<()> {
     let path = default_index_path()?;
+    ensure_parent_dir(&path)?;
+    let _ = Storage::open(&path)?;
+    Ok(())
+}
+
+fn ensure_parent_dir(path: &Path) -> Result<()> {
     let parent = path
         .parent()
         .context("default SQLite index path has no parent directory")?;
@@ -253,33 +288,59 @@ pub fn ensure_default_index() -> Result<()> {
         )
     })?;
 
-    let _ = Storage::open(&path)?;
     Ok(())
 }
 
-fn default_index_path() -> Result<PathBuf> {
-    default_index_path_from_env(env::var("XDG_STATE_HOME").ok(), env::var("HOME").ok())
+pub fn default_state_dir() -> Result<PathBuf> {
+    default_state_dir_from_env_and_exe(
+        env::var("XDG_STATE_HOME").ok(),
+        env::var("HOME").ok(),
+        env::current_exe().ok(),
+    )
 }
 
-fn default_index_path_from_env(
+fn default_index_path() -> Result<PathBuf> {
+    Ok(default_state_dir()?.join("index.sqlite3"))
+}
+
+fn default_state_dir_from_env_and_exe(
     xdg_state_home: Option<String>,
     home: Option<String>,
+    current_exe: Option<PathBuf>,
 ) -> Result<PathBuf> {
+    let namespace = state_namespace_for_current_exe(current_exe.as_deref());
+
     if let Some(state_home) = xdg_state_home {
-        return Ok(PathBuf::from(state_home)
-            .join("transcript-browser")
-            .join("index.sqlite3"));
+        return Ok(PathBuf::from(state_home).join(namespace));
     }
 
     let home = home.context(
-        "failed to determine default SQLite index path: neither XDG_STATE_HOME nor HOME is set",
+        "failed to determine default transcript-browser state directory: neither XDG_STATE_HOME nor HOME is set",
     )?;
 
     Ok(PathBuf::from(home)
         .join(".local")
         .join("state")
-        .join("transcript-browser")
-        .join("index.sqlite3"))
+        .join(namespace))
+}
+
+fn state_namespace_for_current_exe(current_exe: Option<&Path>) -> &'static str {
+    if current_exe.is_some_and(is_repo_target_executable) {
+        DEV_STATE_NAMESPACE
+    } else {
+        PROD_STATE_NAMESPACE
+    }
+}
+
+fn is_repo_target_executable(current_exe: &Path) -> bool {
+    current_exe.starts_with(repo_target_root())
+}
+
+fn repo_target_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("cli crate should live under the workspace root")
+        .join("target")
 }
 
 #[cfg(test)]
@@ -321,7 +382,9 @@ mod tests {
         assert!(table_exists(&storage, "conversation_entry"));
         assert!(table_exists(&storage, "entry_block"));
         assert!(table_exists(&storage, "entry_label"));
+        assert!(table_exists(&storage, "artifact_lexicon"));
         assert!(table_exists(&storage, "conversation_fts"));
+        assert!(table_exists(&storage, "conversation_fts_nl"));
     }
 
     #[test]
@@ -349,7 +412,9 @@ mod tests {
         storage.rebuild().unwrap();
 
         assert_eq!(storage.schema_version().unwrap(), SCHEMA_VERSION);
+        assert!(table_exists(&storage, "artifact_lexicon"));
         assert!(table_exists(&storage, "conversation_fts"));
+        assert!(table_exists(&storage, "conversation_fts_nl"));
         assert_eq!(row_count(&storage, "source_file"), 0);
         assert_eq!(row_count(&storage, "workspace"), 0);
     }
@@ -357,8 +422,13 @@ mod tests {
     #[test]
     fn default_index_path_prefers_xdg_state_home() {
         let path =
-            default_index_path_from_env(Some("/tmp/xdg-state".into()), Some("/tmp/home".into()))
-                .unwrap();
+            default_state_dir_from_env_and_exe(
+                Some("/tmp/xdg-state".into()),
+                Some("/tmp/home".into()),
+                None,
+            )
+            .unwrap()
+            .join("index.sqlite3");
 
         assert_eq!(
             path,
@@ -368,11 +438,62 @@ mod tests {
 
     #[test]
     fn default_index_path_falls_back_to_home() {
-        let path = default_index_path_from_env(None, Some("/tmp/home".into())).unwrap();
+        let path = default_state_dir_from_env_and_exe(None, Some("/tmp/home".into()), None)
+            .unwrap()
+            .join("index.sqlite3");
 
         assert_eq!(
             path,
             PathBuf::from("/tmp/home/.local/state/transcript-browser/index.sqlite3")
         );
+    }
+
+    #[test]
+    fn default_state_dir_prefers_xdg_state_home() {
+        let path =
+            default_state_dir_from_env_and_exe(
+                Some("/tmp/xdg-state".into()),
+                Some("/tmp/home".into()),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(path, PathBuf::from("/tmp/xdg-state/transcript-browser"));
+    }
+
+    #[test]
+    fn default_state_dir_falls_back_to_home() {
+        let path = default_state_dir_from_env_and_exe(None, Some("/tmp/home".into()), None).unwrap();
+
+        assert_eq!(
+            path,
+            PathBuf::from("/tmp/home/.local/state/transcript-browser")
+        );
+    }
+
+    #[test]
+    fn repo_target_executable_uses_dev_state_namespace() {
+        let exe = repo_target_root().join("debug").join("mem");
+        let path = default_state_dir_from_env_and_exe(
+            Some("/tmp/xdg-state".into()),
+            Some("/tmp/home".into()),
+            Some(exe),
+        )
+        .unwrap();
+
+        assert_eq!(path, PathBuf::from("/tmp/xdg-state/transcript-browser-dev"));
+    }
+
+    #[test]
+    fn installed_executable_keeps_prod_state_namespace() {
+        let exe = PathBuf::from("/tmp/home/.local/bin/mem");
+        let path = default_state_dir_from_env_and_exe(
+            Some("/tmp/xdg-state".into()),
+            Some("/tmp/home".into()),
+            Some(exe),
+        )
+        .unwrap();
+
+        assert_eq!(path, PathBuf::from("/tmp/xdg-state/transcript-browser"));
     }
 }

@@ -60,6 +60,11 @@ struct ContentBlock {
     text: Option<String>,
 }
 
+struct ExtractedCodexContent {
+    text: Option<String>,
+    thinking: Vec<String>,
+}
+
 pub fn load_workspaces_full() -> Result<Vec<Workspace>> {
     load_workspaces(LoadMode::Full)
 }
@@ -374,37 +379,58 @@ fn parse_session_file(file_path: &Path, _mode: LoadMode) -> Result<Option<Parsed
                 if item.payload_type != "message" {
                     continue;
                 }
-                let Some((participant, content)) = parse_response_item_content(item) else {
+                let Some(parsed) = parse_response_item_content(item) else {
                     continue;
                 };
-                message_count += 1;
-                if fallback_preview.is_none() {
-                    fallback_preview = first_non_empty_line(&content).map(str::to_string);
-                }
-                if user_preview.is_none() && participant.is_user() {
-                    user_preview = first_non_empty_line(&content).map(str::to_string);
+                if let Some(content) = parsed.text.as_deref() {
+                    message_count += 1;
+                    if fallback_preview.is_none() {
+                        fallback_preview = first_non_empty_line(content).map(str::to_string);
+                    }
+                    if user_preview.is_none() && parsed.participant.is_user() {
+                        user_preview = first_non_empty_line(content).map(str::to_string);
+                    }
+                } else if !parsed.thinking.is_empty() {
+                    message_count += 1;
                 }
                 if let Some(ts) = timestamp_ms {
                     created_at = created_at.min(ts);
                     updated_at = updated_at.max(ts);
                 }
-                messages.push(Message {
-                    id: None,
-                    kind: match participant {
-                        Participant::User => MessageKind::UserMessage,
-                        Participant::Assistant { .. } => MessageKind::AssistantMessage,
-                        Participant::Tool { .. } => MessageKind::ToolResult,
-                        Participant::System | Participant::Unknown { .. } => {
-                            MessageKind::MetadataChange
-                        }
-                    },
-                    participant,
-                    content,
-                    timestamp: timestamp_ms,
-                    parent_id: None,
-                    associated_id: None,
-                    depth: 0,
-                });
+                let base_id = format!("item-{message_count}");
+                for (idx, thinking) in parsed.thinking.into_iter().enumerate() {
+                    messages.push(Message {
+                        id: Some(format!("{base_id}:thinking:{idx}")),
+                        kind: MessageKind::Thinking,
+                        participant: Participant::Assistant {
+                            provider: ProviderKind::Codex,
+                        },
+                        content: thinking,
+                        timestamp: timestamp_ms,
+                        parent_id: None,
+                        associated_id: Some(base_id.clone()),
+                        depth: 0,
+                    });
+                }
+                if let Some(content) = parsed.text {
+                    messages.push(Message {
+                        id: Some(base_id),
+                        kind: match parsed.participant {
+                            Participant::User => MessageKind::UserMessage,
+                            Participant::Assistant { .. } => MessageKind::AssistantMessage,
+                            Participant::Tool { .. } => MessageKind::ToolResult,
+                            Participant::System | Participant::Unknown { .. } => {
+                                MessageKind::MetadataChange
+                            }
+                        },
+                        participant: parsed.participant,
+                        content,
+                        timestamp: timestamp_ms,
+                        parent_id: None,
+                        associated_id: None,
+                        depth: 0,
+                    });
+                }
             }
             _ => {}
         }
@@ -449,7 +475,13 @@ fn build_segment_label(file_stem: &str, session_id: &str) -> String {
     }
 }
 
-fn parse_response_item_content(item: ResponseItemPayload) -> Option<(Participant, String)> {
+struct ParsedCodexMessage {
+    participant: Participant,
+    text: Option<String>,
+    thinking: Vec<String>,
+}
+
+fn parse_response_item_content(item: ResponseItemPayload) -> Option<ParsedCodexMessage> {
     let participant = match item.role.as_deref() {
         Some("user") => Participant::User,
         Some("assistant") => Participant::Assistant {
@@ -463,8 +495,16 @@ fn parse_response_item_content(item: ResponseItemPayload) -> Option<(Participant
         None => infer_participant_from_content(&item.content)?,
     };
 
-    let content = extract_content(item.content?)?;
-    Some((participant, content))
+    let extracted = extract_content(item.content?);
+    if extracted.text.is_none() && extracted.thinking.is_empty() {
+        return None;
+    }
+
+    Some(ParsedCodexMessage {
+        participant,
+        text: extracted.text,
+        thinking: extracted.thinking,
+    })
 }
 
 fn infer_participant_from_content(content: &Option<Vec<ContentBlock>>) -> Option<Participant> {
@@ -486,22 +526,34 @@ fn infer_participant_from_content(content: &Option<Vec<ContentBlock>>) -> Option
     }
 }
 
-fn extract_content(content: Vec<ContentBlock>) -> Option<String> {
-    let texts: Vec<String> = content
-        .into_iter()
-        .filter_map(|block| match block.content_type.as_str() {
-            "input_text" | "output_text" => block.text,
-            _ => None,
-        })
-        .filter(|text| !is_injected_block(text))
-        .collect();
+fn extract_content(content: Vec<ContentBlock>) -> ExtractedCodexContent {
+    let mut texts = Vec::new();
+    let mut thinking = Vec::new();
+
+    for block in content {
+        let Some(text) = block.text else {
+            continue;
+        };
+        if is_injected_block(&text) {
+            continue;
+        }
+        match block.content_type.as_str() {
+            "input_text" | "output_text" => texts.push(text),
+            "reasoning" | "reasoning_text" | "thinking" | "output_reasoning" => {
+                let trimmed = text.trim();
+                if !trimmed.is_empty() {
+                    thinking.push(trimmed.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
 
     let joined = texts.join("\n");
     let trimmed = joined.trim();
-    if trimmed.is_empty() {
-        None
-    } else {
-        Some(trimmed.to_string())
+    ExtractedCodexContent {
+        text: (!trimmed.is_empty()).then(|| trimmed.to_string()),
+        thinking,
     }
 }
 
@@ -594,7 +646,9 @@ mod tests {
                 text: Some("actual user message".into()),
             },
         ];
-        assert_eq!(extract_content(content), Some("actual user message".into()));
+        let extracted = extract_content(content);
+        assert_eq!(extracted.text.as_deref(), Some("actual user message"));
+        assert!(extracted.thinking.is_empty());
     }
 
     #[test]
@@ -613,7 +667,28 @@ mod tests {
                 text: Some("world".into()),
             },
         ];
-        assert_eq!(extract_content(content), Some("hello\nworld".into()));
+        let extracted = extract_content(content);
+        assert_eq!(extracted.text.as_deref(), Some("hello\nworld"));
+        assert!(extracted.thinking.is_empty());
+    }
+
+    #[test]
+    fn test_extract_content_preserves_reasoning_blocks() {
+        let content = vec![
+            ContentBlock {
+                content_type: "reasoning".into(),
+                text: Some("reason step".into()),
+            },
+            ContentBlock {
+                content_type: "output_text".into(),
+                text: Some("answer".into()),
+            },
+        ];
+
+        let extracted = extract_content(content);
+
+        assert_eq!(extracted.text.as_deref(), Some("answer"));
+        assert_eq!(extracted.thinking, vec!["reason step".to_string()]);
     }
 
     #[test]
@@ -626,9 +701,9 @@ mod tests {
                 text: Some("developer content".into()),
             }]),
         };
-        let (participant, content) = parse_response_item_content(item).expect("message");
-        assert_eq!(participant, Participant::System);
-        assert_eq!(content, "developer content");
+        let parsed = parse_response_item_content(item).expect("message");
+        assert_eq!(parsed.participant, Participant::System);
+        assert_eq!(parsed.text.as_deref(), Some("developer content"));
     }
 
     #[test]

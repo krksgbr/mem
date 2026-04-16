@@ -1,4 +1,5 @@
 use anyhow::{anyhow, bail, Result};
+use clap::{error::ErrorKind, Args as ClapArgs, Parser, Subcommand, ValueEnum};
 use shared::{LayoutMode, ProviderKind};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,8 +7,11 @@ pub enum Command {
     Run(RunArgs),
     DumpScreen(DumpScreenArgs),
     ProfileScroll(ProfileScrollArgs),
+    Workspaces(WorkspacesArgs),
+    Latest(LatestArgs),
     Search(SearchArgs),
     Read(ReadArgs),
+    Help(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -19,6 +23,7 @@ pub struct RunArgs {
 pub struct SearchArgs {
     pub query: String,
     pub limit: usize,
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +31,21 @@ pub struct ReadArgs {
     pub conversation: String,
     pub offset: usize,
     pub limit: usize,
+    pub json: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WorkspacesArgs {
+    pub provider: Option<ProviderKind>,
+    pub json: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LatestArgs {
+    pub provider: Option<ProviderKind>,
+    pub workspace: Option<String>,
+    pub limit: usize,
+    pub json: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,243 +110,318 @@ impl Default for DumpScreenArgs {
     }
 }
 
+#[derive(Parser, Debug)]
+#[command(
+    name = "mem",
+    bin_name = "mem",
+    about = "Browse and inspect indexed AI conversations.",
+    long_about = None
+)]
+struct Cli {
+    #[arg(
+        long,
+        help = "Write an interactive profile report during the TUI session.",
+        help_heading = "Run Options"
+    )]
+    profile: bool,
+
+    #[command(subcommand)]
+    command: Option<CliCommand>,
+}
+
+#[derive(Subcommand, Debug)]
+enum CliCommand {
+    #[command(about = "Run the interactive terminal UI.")]
+    Run(RunCli),
+
+    #[command(about = "List indexed workspaces.")]
+    Workspaces(WorkspacesCli),
+
+    #[command(about = "List the most recently active conversations.")]
+    Latest(LatestCli),
+
+    #[command(about = "Search indexed conversations.")]
+    Search(SearchCli),
+
+    #[command(about = "Read transcript entries from one conversation.")]
+    Read(ReadCli),
+
+    #[command(hide = true)]
+    DumpScreen(DumpScreenCli),
+
+    #[command(hide = true)]
+    ProfileScroll(ProfileScrollCli),
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq, Default)]
+struct RunCli {
+    #[arg(long, help = "Write an interactive profile report during the TUI session.")]
+    profile: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq)]
+struct WorkspacesCli {
+    #[arg(long, value_enum, help = "Only show workspaces containing conversations from this provider.")]
+    provider: Option<ProviderArg>,
+
+    #[arg(long, help = "Emit machine-readable JSON instead of text output.")]
+    json: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq)]
+struct LatestCli {
+    #[arg(long, value_enum, help = "Only show conversations from this provider.")]
+    provider: Option<ProviderArg>,
+
+    #[arg(long, help = "Restrict results to one workspace id, display name, or canonical path.")]
+    workspace: Option<String>,
+
+    #[arg(long, default_value_t = 10, help = "Maximum number of conversations to show.")]
+    limit: usize,
+
+    #[arg(long, help = "Emit machine-readable JSON instead of text output.")]
+    json: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq)]
+struct SearchCli {
+    #[arg(help = "Search query to run against indexed conversations.")]
+    query: String,
+
+    #[arg(long, default_value_t = 10, help = "Maximum number of matching conversations to show.")]
+    limit: usize,
+
+    #[arg(long, help = "Emit machine-readable JSON instead of text output.")]
+    json: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq)]
+struct ReadCli {
+    #[arg(help = "Conversation selector: internal id, provider external id, or exact title.")]
+    selector: Option<String>,
+
+    #[arg(long, help = "Conversation selector: internal id, provider external id, or exact title.")]
+    conversation: Option<String>,
+
+    #[arg(long, default_value_t = 0, help = "Zero-based entry offset to start reading from.")]
+    offset: usize,
+
+    #[arg(long, default_value_t = 50, help = "Maximum number of entries to return.")]
+    limit: usize,
+
+    #[arg(long, help = "Emit machine-readable JSON instead of text output.")]
+    json: bool,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq)]
+struct ProfileScrollCli {
+    #[arg(long)]
+    workspace: String,
+    #[arg(long)]
+    conversation: String,
+    #[arg(long, value_enum)]
+    provider: Option<ProviderArg>,
+    #[arg(long, default_value_t = 120)]
+    width: u16,
+    #[arg(long, default_value_t = 40)]
+    height: u16,
+    #[arg(long)]
+    now_ms: Option<i64>,
+    #[arg(long, default_value_t = 100)]
+    steps: usize,
+    #[arg(long, default_value_t = 0)]
+    message_index: usize,
+    #[arg(long, value_enum, default_value_t = DirectionArg::Down)]
+    direction: DirectionArg,
+}
+
+#[derive(ClapArgs, Debug, Clone, PartialEq, Eq, Default)]
+struct DumpScreenCli {
+    #[arg(long)]
+    screen_ref: Option<String>,
+    #[arg(long, value_enum, default_value_t = ScreenArg::Workspaces)]
+    screen: ScreenArg,
+    #[arg(long)]
+    workspace: Option<String>,
+    #[arg(long)]
+    conversation: Option<String>,
+    #[arg(long, value_enum)]
+    provider: Option<ProviderArg>,
+    #[arg(long, value_enum)]
+    layout: Option<LayoutArg>,
+    #[arg(long, default_value_t = 120)]
+    width: u16,
+    #[arg(long, default_value_t = 40)]
+    height: u16,
+    #[arg(long)]
+    now_ms: Option<i64>,
+    #[arg(long, default_value_t = 0)]
+    selected: usize,
+    #[arg(long, default_value_t = 0)]
+    message_index: usize,
+    #[arg(long, default_value_t = false)]
+    expand_all: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum ProviderArg {
+    #[value(alias = "claude")]
+    ClaudeCode,
+    Codex,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum LayoutArg {
+    Table,
+    Split,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
+enum DirectionArg {
+    #[default]
+    Down,
+    Up,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Default)]
+enum ScreenArg {
+    #[default]
+    Workspaces,
+    Conversations,
+    History,
+    Messages,
+}
+
+impl From<ProviderArg> for ProviderKind {
+    fn from(value: ProviderArg) -> Self {
+        match value {
+            ProviderArg::ClaudeCode => ProviderKind::ClaudeCode,
+            ProviderArg::Codex => ProviderKind::Codex,
+        }
+    }
+}
+
+impl From<LayoutArg> for LayoutMode {
+    fn from(value: LayoutArg) -> Self {
+        match value {
+            LayoutArg::Table => LayoutMode::Table,
+            LayoutArg::Split => LayoutMode::Split,
+        }
+    }
+}
+
+impl From<DirectionArg> for ScrollDirection {
+    fn from(value: DirectionArg) -> Self {
+        match value {
+            DirectionArg::Down => ScrollDirection::Down,
+            DirectionArg::Up => ScrollDirection::Up,
+        }
+    }
+}
+
+impl From<ScreenArg> for ScreenTarget {
+    fn from(value: ScreenArg) -> Self {
+        match value {
+            ScreenArg::Workspaces => ScreenTarget::Workspaces,
+            ScreenArg::Conversations => ScreenTarget::Conversations,
+            ScreenArg::History => ScreenTarget::History,
+            ScreenArg::Messages => ScreenTarget::Messages,
+        }
+    }
+}
+
 pub fn parse_args<I>(args: I) -> Result<Command>
 where
     I: IntoIterator<Item = String>,
 {
-    let mut args = args.into_iter();
-    let _program = args.next();
+    match Cli::try_parse_from(args) {
+        Ok(cli) => convert_cli(cli),
+        Err(error) => match error.kind() {
+            ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => Ok(Command::Help(error.to_string())),
+            _ => Err(anyhow!(error.to_string())),
+        },
+    }
+}
 
-    match args.next() {
-        None => Ok(Command::Run(RunArgs::default())),
-        Some(arg) if arg == "run" => parse_run(args),
-        Some(arg) if arg.starts_with("--") => parse_run(std::iter::once(arg).chain(args)),
-        Some(arg) if arg == "dump-screen" => parse_dump_screen(args),
-        Some(arg) if arg == "profile-scroll" => parse_profile_scroll(args),
-        Some(arg) if arg == "search" => parse_search(args),
-        Some(arg) if arg == "read" => parse_read(args),
-        Some(other) => {
-            bail!(
-                "unknown command '{other}'. expected 'run', 'dump-screen', 'profile-scroll', 'search', or 'read'"
-            )
+fn convert_cli(cli: Cli) -> Result<Command> {
+    match cli.command {
+        None => Ok(Command::Run(RunArgs {
+            profile: cli.profile,
+        })),
+        Some(CliCommand::Run(run)) => Ok(Command::Run(RunArgs {
+            profile: cli.profile || run.profile,
+        })),
+        Some(CliCommand::Workspaces(args)) => Ok(Command::Workspaces(WorkspacesArgs {
+            provider: args.provider.map(Into::into),
+            json: args.json,
+        })),
+        Some(CliCommand::Latest(args)) => Ok(Command::Latest(LatestArgs {
+            provider: args.provider.map(Into::into),
+            workspace: args.workspace,
+            limit: args.limit,
+            json: args.json,
+        })),
+        Some(CliCommand::Search(args)) => Ok(Command::Search(SearchArgs {
+            query: args.query,
+            limit: args.limit,
+            json: args.json,
+        })),
+        Some(CliCommand::Read(args)) => {
+            let conversation = resolve_read_selector(args.selector, args.conversation)?;
+            Ok(Command::Read(ReadArgs {
+                conversation,
+                offset: args.offset,
+                limit: args.limit,
+                json: args.json,
+            }))
+        }
+        Some(CliCommand::DumpScreen(args)) => {
+            let parsed = DumpScreenArgs {
+                screen_ref: args.screen_ref,
+                screen: args.screen.into(),
+                workspace: args.workspace,
+                conversation: args.conversation,
+                provider: args.provider.map(Into::into),
+                layout: args.layout.map(Into::into),
+                width: args.width,
+                height: args.height,
+                now_ms: args.now_ms,
+                selected: args.selected,
+                message_index: args.message_index,
+                expand_all: args.expand_all,
+            };
+            validate_dump_screen_args(&parsed)?;
+            Ok(Command::DumpScreen(parsed))
+        }
+        Some(CliCommand::ProfileScroll(args)) => {
+            if args.width == 0 || args.height == 0 {
+                bail!("--width and --height must be greater than zero");
+            }
+            Ok(Command::ProfileScroll(ProfileScrollArgs {
+                workspace: args.workspace,
+                conversation: args.conversation,
+                provider: args.provider.map(Into::into),
+                width: args.width,
+                height: args.height,
+                now_ms: args.now_ms,
+                steps: args.steps,
+                message_index: args.message_index,
+                direction: args.direction.into(),
+            }))
         }
     }
 }
 
-fn parse_run<I>(args: I) -> Result<Command>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut parsed = RunArgs::default();
-
-    for arg in args {
-        match arg.as_str() {
-            "--profile" => parsed.profile = true,
-            other => bail!("unknown run flag '{other}'"),
-        }
+fn resolve_read_selector(
+    selector: Option<String>,
+    conversation_flag: Option<String>,
+) -> Result<String> {
+    match (selector, conversation_flag) {
+        (Some(_), Some(_)) => bail!("read accepts exactly one conversation selector"),
+        (Some(selector), None) => Ok(selector),
+        (None, Some(selector)) => Ok(selector),
+        (None, None) => bail!("read requires a conversation selector"),
     }
-
-    Ok(Command::Run(parsed))
-}
-
-fn parse_profile_scroll<I>(args: I) -> Result<Command>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut args = args.into_iter();
-    let mut workspace = None;
-    let mut conversation = None;
-    let mut provider = None;
-    let mut width = 120u16;
-    let mut height = 40u16;
-    let mut now_ms = None;
-    let mut steps = 100usize;
-    let mut message_index = 0usize;
-    let mut direction = ScrollDirection::Down;
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--workspace" => workspace = Some(next_value(&mut args, "--workspace")?),
-            "--conversation" => conversation = Some(next_value(&mut args, "--conversation")?),
-            "--provider" => {
-                let value = next_value(&mut args, "--provider")?;
-                provider = Some(parse_provider(&value)?);
-            }
-            "--width" => {
-                let value = next_value(&mut args, "--width")?;
-                width = parse_u16(&value, "--width")?;
-            }
-            "--height" => {
-                let value = next_value(&mut args, "--height")?;
-                height = parse_u16(&value, "--height")?;
-            }
-            "--now-ms" => {
-                let value = next_value(&mut args, "--now-ms")?;
-                now_ms = Some(parse_i64(&value, "--now-ms")?);
-            }
-            "--steps" => {
-                let value = next_value(&mut args, "--steps")?;
-                steps = parse_usize(&value, "--steps")?;
-            }
-            "--message-index" => {
-                let value = next_value(&mut args, "--message-index")?;
-                message_index = parse_usize(&value, "--message-index")?;
-            }
-            "--direction" => {
-                let value = next_value(&mut args, "--direction")?;
-                direction = match value.as_str() {
-                    "down" => ScrollDirection::Down,
-                    "up" => ScrollDirection::Up,
-                    other => bail!("invalid value '{other}' for --direction: expected down or up"),
-                };
-            }
-            other => bail!("unknown profile-scroll flag '{other}'"),
-        }
-    }
-
-    let workspace =
-        workspace.ok_or_else(|| anyhow!("profile-scroll requires --workspace <path>"))?;
-    let conversation = conversation
-        .ok_or_else(|| anyhow!("profile-scroll requires --conversation <id-or-title>"))?;
-
-    if width == 0 || height == 0 {
-        bail!("--width and --height must be greater than zero");
-    }
-
-    Ok(Command::ProfileScroll(ProfileScrollArgs {
-        workspace,
-        conversation,
-        provider,
-        width,
-        height,
-        now_ms,
-        steps,
-        message_index,
-        direction,
-    }))
-}
-
-fn parse_search<I>(args: I) -> Result<Command>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut args = args.into_iter();
-    let mut query = None;
-    let mut limit = 10usize;
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--limit" => {
-                let value = next_value(&mut args, "--limit")?;
-                limit = parse_usize(&value, "--limit")?;
-            }
-            other if other.starts_with("--") => bail!("unknown search flag '{other}'"),
-            other => {
-                if query.is_some() {
-                    bail!("search accepts exactly one query string");
-                }
-                query = Some(other.to_string());
-            }
-        }
-    }
-
-    let query = query.ok_or_else(|| anyhow!("search requires a query string"))?;
-    Ok(Command::Search(SearchArgs { query, limit }))
-}
-
-fn parse_read<I>(args: I) -> Result<Command>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut args = args.into_iter();
-    let mut conversation = None;
-    let mut offset = 0usize;
-    let mut limit = 50usize;
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--conversation" => {
-                conversation = Some(next_value(&mut args, "--conversation")?);
-            }
-            "--offset" => {
-                let value = next_value(&mut args, "--offset")?;
-                offset = parse_usize(&value, "--offset")?;
-            }
-            "--limit" => {
-                let value = next_value(&mut args, "--limit")?;
-                limit = parse_usize(&value, "--limit")?;
-            }
-            other => bail!("unknown read flag '{other}'"),
-        }
-    }
-
-    let conversation = conversation.ok_or_else(|| anyhow!("read requires --conversation <id>"))?;
-    Ok(Command::Read(ReadArgs {
-        conversation,
-        offset,
-        limit,
-    }))
-}
-
-fn parse_dump_screen<I>(args: I) -> Result<Command>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut parsed = DumpScreenArgs::default();
-    let mut args = args.into_iter();
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--screen" => {
-                let value = next_value(&mut args, "--screen")?;
-                parsed.screen = parse_screen(&value)?;
-            }
-            "--screen-ref" => {
-                parsed.screen_ref = Some(next_value(&mut args, "--screen-ref")?);
-            }
-            "--workspace" => {
-                parsed.workspace = Some(next_value(&mut args, "--workspace")?);
-            }
-            "--conversation" => {
-                parsed.conversation = Some(next_value(&mut args, "--conversation")?);
-            }
-            "--provider" => {
-                let value = next_value(&mut args, "--provider")?;
-                parsed.provider = Some(parse_provider(&value)?);
-            }
-            "--layout" => {
-                let value = next_value(&mut args, "--layout")?;
-                parsed.layout = Some(parse_layout(&value)?);
-            }
-            "--width" => {
-                let value = next_value(&mut args, "--width")?;
-                parsed.width = parse_u16(&value, "--width")?;
-            }
-            "--height" => {
-                let value = next_value(&mut args, "--height")?;
-                parsed.height = parse_u16(&value, "--height")?;
-            }
-            "--now-ms" => {
-                let value = next_value(&mut args, "--now-ms")?;
-                parsed.now_ms = Some(parse_i64(&value, "--now-ms")?);
-            }
-            "--selected" => {
-                let value = next_value(&mut args, "--selected")?;
-                parsed.selected = parse_usize(&value, "--selected")?;
-            }
-            "--message-index" => {
-                let value = next_value(&mut args, "--message-index")?;
-                parsed.message_index = parse_usize(&value, "--message-index")?;
-            }
-            "--expand-all" => {
-                parsed.expand_all = true;
-            }
-            other => bail!("unknown dump-screen flag '{other}'"),
-        }
-    }
-
-    validate_dump_screen_args(&parsed)?;
-    Ok(Command::DumpScreen(parsed))
 }
 
 fn validate_dump_screen_args(args: &DumpScreenArgs) -> Result<()> {
@@ -423,60 +518,6 @@ fn validate_dump_screen_args(args: &DumpScreenArgs) -> Result<()> {
     Ok(())
 }
 
-fn next_value<I>(args: &mut I, flag: &str) -> Result<String>
-where
-    I: Iterator<Item = String>,
-{
-    args.next()
-        .ok_or_else(|| anyhow!("missing value for {flag}"))
-}
-
-fn parse_screen(value: &str) -> Result<ScreenTarget> {
-    match value {
-        "workspaces" => Ok(ScreenTarget::Workspaces),
-        "conversations" => Ok(ScreenTarget::Conversations),
-        "history" => Ok(ScreenTarget::History),
-        "messages" => Ok(ScreenTarget::Messages),
-        other => {
-            bail!("invalid screen '{other}'. expected one of: workspaces, conversations, history, messages")
-        }
-    }
-}
-
-fn parse_provider(value: &str) -> Result<ProviderKind> {
-    match value.to_ascii_lowercase().as_str() {
-        "claude" | "claude-code" => Ok(ProviderKind::ClaudeCode),
-        "codex" => Ok(ProviderKind::Codex),
-        other => bail!("invalid provider '{other}'. expected one of: claude-code, codex"),
-    }
-}
-
-fn parse_layout(value: &str) -> Result<LayoutMode> {
-    match value.to_ascii_lowercase().as_str() {
-        "table" => Ok(LayoutMode::Table),
-        "split" => Ok(LayoutMode::Split),
-        other => bail!("invalid layout '{other}'. expected one of: table, split"),
-    }
-}
-
-fn parse_u16(value: &str, flag: &str) -> Result<u16> {
-    value
-        .parse()
-        .map_err(|_| anyhow!("invalid value '{value}' for {flag}: expected an integer"))
-}
-
-fn parse_i64(value: &str, flag: &str) -> Result<i64> {
-    value
-        .parse()
-        .map_err(|_| anyhow!("invalid value '{value}' for {flag}: expected an integer"))
-}
-
-fn parse_usize(value: &str, flag: &str) -> Result<usize> {
-    value
-        .parse()
-        .map_err(|_| anyhow!("invalid value '{value}' for {flag}: expected an integer"))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -488,7 +529,7 @@ mod tests {
     #[test]
     fn parse_defaults_to_run() {
         assert_eq!(
-            parse_args(args(&["cli"])).unwrap(),
+            parse_args(args(&["mem"])).unwrap(),
             Command::Run(RunArgs::default())
         );
     }
@@ -496,7 +537,7 @@ mod tests {
     #[test]
     fn parse_run_profile_flag() {
         assert_eq!(
-            parse_args(args(&["cli", "run", "--profile"])).unwrap(),
+            parse_args(args(&["mem", "run", "--profile"])).unwrap(),
             Command::Run(RunArgs { profile: true })
         );
     }
@@ -504,7 +545,7 @@ mod tests {
     #[test]
     fn parse_implicit_run_profile_flag() {
         assert_eq!(
-            parse_args(args(&["cli", "--profile"])).unwrap(),
+            parse_args(args(&["mem", "--profile"])).unwrap(),
             Command::Run(RunArgs { profile: true })
         );
     }
@@ -512,7 +553,7 @@ mod tests {
     #[test]
     fn parse_dump_screen_args() {
         let parsed = parse_args(args(&[
-            "cli",
+            "mem",
             "dump-screen",
             "--screen",
             "conversations",
@@ -554,7 +595,7 @@ mod tests {
 
     #[test]
     fn parse_rejects_missing_workspace_for_conversations() {
-        let err = parse_args(args(&["cli", "dump-screen", "--screen", "conversations"]))
+        let err = parse_args(args(&["mem", "dump-screen", "--screen", "conversations"]))
             .unwrap_err()
             .to_string();
 
@@ -564,12 +605,26 @@ mod tests {
     #[test]
     fn parse_search_args() {
         let parsed =
-            parse_args(args(&["cli", "search", "startup latency", "--limit", "5"])).unwrap();
+            parse_args(args(&["mem", "search", "startup latency", "--limit", "5"])).unwrap();
         assert_eq!(
             parsed,
             Command::Search(SearchArgs {
                 query: "startup latency".into(),
                 limit: 5,
+                json: false,
+            })
+        );
+    }
+
+    #[test]
+    fn parse_search_json_flag() {
+        let parsed = parse_args(args(&["mem", "search", "lightdash", "--json"])).unwrap();
+        assert_eq!(
+            parsed,
+            Command::Search(SearchArgs {
+                query: "lightdash".into(),
+                limit: 10,
+                json: true,
             })
         );
     }
@@ -577,7 +632,7 @@ mod tests {
     #[test]
     fn parse_read_args() {
         let parsed = parse_args(args(&[
-            "cli",
+            "mem",
             "read",
             "--conversation",
             "claude_code:/tmp/foo:bar",
@@ -594,14 +649,102 @@ mod tests {
                 conversation: "claude_code:/tmp/foo:bar".into(),
                 offset: 10,
                 limit: 25,
+                json: false,
             })
         );
     }
 
     #[test]
+    fn parse_read_accepts_positional_selector() {
+        let parsed = parse_args(args(&[
+            "mem",
+            "read",
+            "36b83837-732d-4796-9def-6eea6652f267",
+            "--limit",
+            "20",
+        ]))
+        .unwrap();
+
+        assert_eq!(
+            parsed,
+            Command::Read(ReadArgs {
+                conversation: "36b83837-732d-4796-9def-6eea6652f267".into(),
+                offset: 0,
+                limit: 20,
+                json: false,
+            })
+        );
+    }
+
+    #[test]
+    fn parse_workspaces_args() {
+        let parsed =
+            parse_args(args(&["mem", "workspaces", "--provider", "claude-code", "--json"]))
+                .unwrap();
+
+        assert_eq!(
+            parsed,
+            Command::Workspaces(WorkspacesArgs {
+                provider: Some(ProviderKind::ClaudeCode),
+                json: true,
+            })
+        );
+    }
+
+    #[test]
+    fn parse_latest_args() {
+        let parsed = parse_args(args(&[
+            "mem",
+            "latest",
+            "--provider",
+            "codex",
+            "--workspace",
+            "~/unbody/bookmarking",
+            "--limit",
+            "3",
+        ]))
+        .unwrap();
+
+        assert_eq!(
+            parsed,
+            Command::Latest(LatestArgs {
+                provider: Some(ProviderKind::Codex),
+                workspace: Some("~/unbody/bookmarking".into()),
+                limit: 3,
+                json: false,
+            })
+        );
+    }
+
+    #[test]
+    fn parse_read_help_flag_returns_help_command() {
+        let parsed = parse_args(args(&["mem", "read", "--help"])).unwrap();
+        match parsed {
+            Command::Help(text) => {
+                assert!(text.contains("Conversation selector"));
+                assert!(text.contains("--json"));
+            }
+            other => panic!("expected help command, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_top_level_help_flag_returns_help_command() {
+        let parsed = parse_args(args(&["mem", "--help"])).unwrap();
+        match parsed {
+            Command::Help(text) => {
+                assert!(text.contains("Browse and inspect indexed AI conversations."));
+                assert!(text.contains("workspaces"));
+                assert!(text.contains("latest"));
+            }
+            other => panic!("expected help command, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn parse_profile_scroll_args() {
         let parsed = parse_args(args(&[
-            "cli",
+            "mem",
             "profile-scroll",
             "--workspace",
             "~/projects/transcript-browser",
@@ -641,7 +784,7 @@ mod tests {
     #[test]
     fn parse_dump_screen_screen_ref_args() {
         let parsed = parse_args(args(&[
-            "cli",
+            "mem",
             "dump-screen",
             "--screen-ref",
             "./transcript-browser-screen-ref.json",

@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "workspace": "~/unbody/bookmarking",
+  "workspace": "/Users/gaborkerekes/projects/sibyl-memory-mvp",
   "provider_filter": null,
-  "width": 87,
+  "width": 177,
   "height": 44,
   "screen": {
     "Conversations": {
-      "selected_row_id": "summary:claude_code:/Users/gaborkerekes/unbody/bookmarking:36b83837-732d-4796-9def-6eea6652f267:2-3",
-      "expanded_row_ids": [
-        "conv:claude_code:/Users/gaborkerekes/unbody/bookmarking:36b83837-732d-4796-9def-6eea6652f267"
-      ]
+      "selected_row_id": "conv:codex:/Users/gaborkerekes/projects/sibyl-memory-mvp:019d8bad-8064-77d2-a3a0-bb5741723dce",
+      "selected_row_label": "<role>",
+      "selected_index": 6,
+      "expanded_row_ids": []
     }
   }
 }

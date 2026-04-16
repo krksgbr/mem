@@ -1,5 +1,5 @@
 use anyhow::Result;
-use args::{Command, RunArgs};
+use args::{Command, LatestArgs, RunArgs, WorkspacesArgs};
 use chrono::Utc;
 use crossterm::event::{self, Event as CrosstermEvent};
 use crux_core::App;
@@ -21,6 +21,7 @@ mod runtime;
 mod screen_ref;
 mod storage;
 mod theme;
+mod trial_trace;
 
 #[cfg(test)]
 mod test_utils;
@@ -38,8 +39,14 @@ async fn main() -> Result<()> {
         Command::Run(args) => run_interactive(args).await,
         Command::DumpScreen(args) => dump_screen_command(&args).await,
         Command::ProfileScroll(args) => profile_scroll_command(&args).await,
+        Command::Workspaces(args) => workspaces_command(&args).await,
+        Command::Latest(args) => latest_command(&args).await,
         Command::Search(args) => search_command(&args).await,
         Command::Read(args) => read_command(&args).await,
+        Command::Help(text) => {
+            println!("{text}");
+            Ok(())
+        }
     }
 }
 
@@ -133,7 +140,22 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
         }
 
         let hydrate_start = Instant::now();
-        hydration::hydrate_visible_conversation(&mut model)?;
+        if let Err(error) = hydration::hydrate_visible_conversation(&mut model) {
+            let now_ms = Utc::now().timestamp_millis();
+            if hydration::recover_missing_indexed_conversation(&app, &mut model, now_ms, &error)? {
+                if let Some(profiler) = profiler.as_mut() {
+                    profiler.log_event(
+                        "hydration_recovery",
+                        format!("recovered from stale indexed conversation: {error}"),
+                    );
+                    if let Some(path) = report_path.as_ref() {
+                        profiler.persist(path, "running", None)?;
+                    }
+                }
+            } else {
+                return Err(error);
+            }
+        }
         let hydrate_ms = elapsed_ms(hydrate_start);
 
         let view_start = Instant::now();
@@ -150,10 +172,12 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
 
         let poll_start = Instant::now();
         let mut key_code = None;
+        let mut poll_wait_ms = 0.0;
         let mut update_ms = 0.0;
         let mut input_outcome_name = None;
         let mut had_interaction = false;
         if event::poll(std::time::Duration::from_millis(16))? {
+            poll_wait_ms = elapsed_ms(poll_start);
             if let CrosstermEvent::Key(key) = event::read()? {
                 had_interaction = true;
                 key_code = Some(key.code);
@@ -168,7 +192,7 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
                             key_code,
                             input_outcome_name,
                             InteractivePhaseDurations {
-                                poll_wait: elapsed_ms(poll_start),
+                                poll_wait: poll_wait_ms,
                                 update: update_ms,
                                 hydrate: hydrate_ms,
                                 view: view_ms,
@@ -239,7 +263,7 @@ async fn run_interactive(args: RunArgs) -> Result<()> {
                     key_code,
                     input_outcome_name,
                     InteractivePhaseDurations {
-                        poll_wait: elapsed_ms(poll_start),
+                        poll_wait: poll_wait_ms,
                         update: update_ms,
                         hydrate: hydrate_ms,
                         view: view_ms,
@@ -280,14 +304,53 @@ async fn dump_screen_command(args: &args::DumpScreenArgs) -> Result<()> {
 async fn search_command(args: &args::SearchArgs) -> Result<()> {
     ensure_read_only_index_ready()?;
     let results = indexed::search(&args.query, args.limit)?;
-    println!("{}", serde_json::to_string_pretty(&results)?);
+    trial_trace::record_search(&args.query, args.limit, &results)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&results)?);
+    } else {
+        print!("{}", format_search_results(&results));
+    }
     Ok(())
 }
 
 async fn read_command(args: &args::ReadArgs) -> Result<()> {
     storage::ensure_default_index()?;
     let result = indexed::read(&args.conversation, args.offset, args.limit)?;
-    println!("{}", serde_json::to_string_pretty(&result)?);
+    trial_trace::record_read(&args.conversation, args.offset, args.limit, result.as_ref())?;
+    let result = result.ok_or_else(|| {
+        anyhow::anyhow!(
+            "conversation '{}' not found. Pass an internal conversation id from search output, a provider external id, or an exact title.",
+            args.conversation
+        )
+    })?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&result)?);
+    } else {
+        print!("{}", format_read_result(&result));
+    }
+    Ok(())
+}
+
+async fn workspaces_command(args: &WorkspacesArgs) -> Result<()> {
+    ensure_read_only_index_ready()?;
+    let results = indexed::list_workspaces(args.provider)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&results)?);
+    } else {
+        print!("{}", format_workspaces(&results));
+    }
+    Ok(())
+}
+
+async fn latest_command(args: &LatestArgs) -> Result<()> {
+    ensure_read_only_index_ready()?;
+    let results =
+        indexed::latest_conversations(args.provider, args.workspace.as_deref(), args.limit)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&results)?);
+    } else {
+        print!("{}", format_latest_results(&results));
+    }
     Ok(())
 }
 
@@ -331,5 +394,146 @@ fn input_outcome_label(outcome: &input::InputOutcome) -> &'static str {
         input::InputOutcome::Event(_) => "event",
         input::InputOutcome::CopyActiveId => "copy_active_id",
         input::InputOutcome::CopyScreenRef => "copy_screen_ref",
+    }
+}
+
+fn provider_display(provider: &str) -> &str {
+    match provider {
+        "claude_code" => "Claude Code",
+        "codex" => "Codex",
+        other => other,
+    }
+}
+
+fn format_search_results(results: &[indexed::SearchResult]) -> String {
+    if results.is_empty() {
+        return "No conversations found.\n".to_string();
+    }
+
+    let mut out = String::new();
+    for (idx, result) in results.iter().enumerate() {
+        out.push_str(&format!("{}. Title: {}\n", idx + 1, result.title));
+        out.push_str(&format!(
+            "   Agent: {}\n",
+            provider_display(&result.provider),
+        ));
+        out.push_str(&format!("   Workspace: {}\n", result.workspace));
+        out.push_str(&format!(
+            "   Last active: {}\n",
+            relative_time(result.updated_at_ms)
+        ));
+        out.push_str(&format!("   Matched text: {}\n", result.snippet.trim()));
+        out.push_str(&format!("   Conversation ID: {}\n", result.conversation_id));
+        if idx + 1 != results.len() {
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn format_latest_results(results: &[indexed::RecentConversationResult]) -> String {
+    if results.is_empty() {
+        return "No conversations found.\n".to_string();
+    }
+
+    let mut out = String::new();
+    for (idx, result) in results.iter().enumerate() {
+        out.push_str(&format!("{}. Title: {}\n", idx + 1, result.title));
+        out.push_str(&format!(
+            "   Agent: {}\n",
+            provider_display(&result.provider),
+        ));
+        out.push_str(&format!("   Workspace: {}\n", result.workspace));
+        out.push_str(&format!(
+            "   Last active: {}\n",
+            relative_time(result.updated_at_ms)
+        ));
+        out.push_str(&format!("   Latest message: {}\n", result.snippet.trim()));
+        out.push_str(&format!("   Conversation ID: {}\n", result.conversation_id));
+        if idx + 1 != results.len() {
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn format_workspaces(results: &[indexed::WorkspaceListResult]) -> String {
+    if results.is_empty() {
+        return "No workspaces found.\n".to_string();
+    }
+
+    let mut out = String::new();
+    for (idx, result) in results.iter().enumerate() {
+        out.push_str(&format!("{}. Workspace: {}\n", idx + 1, result.display_name));
+        if let Some(path) = &result.canonical_path {
+            out.push_str(&format!("   Path: {}\n", path));
+        }
+        out.push_str(&format!(
+            "   Conversations: {} total • Claude Code: {} • Codex: {}\n",
+            result.conversation_count,
+            result.claude_code_conversation_count,
+            result.codex_conversation_count,
+        ));
+        out.push_str(&format!(
+            "   Last active: {}\n",
+            relative_time(result.updated_at_ms)
+        ));
+        out.push_str(&format!("   Workspace ID: {}\n", result.workspace_id));
+        if idx + 1 != results.len() {
+            out.push('\n');
+        }
+    }
+    out
+}
+
+fn format_read_result(result: &indexed::ReadResult) -> String {
+    let mut out = String::new();
+    out.push_str(&format!("Title: {}\n", result.title));
+    out.push_str(&format!(
+        "Agent: {}\n",
+        provider_display(&result.provider),
+    ));
+    out.push_str(&format!("Conversation ID: {}\n", result.conversation_id));
+    out.push_str(&format!("Entries in conversation: {}\n", result.total_entries));
+    out.push_str(&format!("Read offset: {}\n", result.offset));
+    out.push_str(&format!("Read limit: {}\n\n", result.limit));
+
+    for (idx, entry) in result.entries.iter().enumerate() {
+        let timestamp = entry
+            .timestamp_ms
+            .map(relative_time)
+            .unwrap_or_else(|| "unknown time".to_string());
+        out.push_str(&format!(
+            "{}. Participant: {} • Kind: {} • Time: {}\n",
+            result.offset + idx + 1,
+            entry.participant,
+            entry.kind,
+            timestamp
+        ));
+        for line in entry.content.lines() {
+            out.push_str(&format!("   {}\n", line));
+        }
+        out.push('\n');
+    }
+
+    if let Some(next_offset) = result.next_offset {
+        out.push_str(&format!("next offset: {}\n", next_offset));
+    }
+    out
+}
+
+fn relative_time(timestamp_ms: i64) -> String {
+    let now_ms = Utc::now().timestamp_millis();
+    let delta_ms = now_ms.saturating_sub(timestamp_ms).max(0);
+    let minute = 60_000;
+    let hour = 60 * minute;
+    let day = 24 * hour;
+
+    if delta_ms < hour {
+        format!("{}m ago", (delta_ms / minute).max(1))
+    } else if delta_ms < day {
+        format!("{}h ago", (delta_ms / hour).max(1))
+    } else {
+        format!("{}d ago", (delta_ms / day).max(1))
     }
 }

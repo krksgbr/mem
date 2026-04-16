@@ -267,48 +267,73 @@ fn scan_message_file(
             .get("role")
             .and_then(|role| role.as_str())
             .unwrap_or("unknown");
-        let Some(text_content) = extract_message_content(msg.get("content")) else {
+        let extracted = extract_message_content(msg.get("content"));
+        let text_content = extracted.text;
+        let thinking_blocks = extracted.thinking;
+        if text_content.is_none() && thinking_blocks.is_empty() {
             continue;
-        };
+        }
 
         let is_sidechain = val
             .get("isSidechain")
             .and_then(|value| value.as_bool())
             .unwrap_or(false);
 
-        if acc.fallback_preview.is_none() && parse_claude_scaffold_sequence(&text_content).is_none()
-        {
-            acc.fallback_preview = first_non_empty_line(&text_content).map(str::to_string);
-        }
-        if acc.user_preview.is_none()
-            && role.eq_ignore_ascii_case("user")
-            && !(is_sidechain || depth > 0)
-            && parse_claude_scaffold_sequence(&text_content).is_none()
-        {
-            acc.user_preview = first_non_empty_line(&text_content).map(str::to_string);
-        }
+        let message_id = val
+            .get("uuid")
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_string());
+        let parent_id = val
+            .get("parentUuid")
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_string());
+        let associated_id = val
+            .get("sourceToolAssistantUUID")
+            .and_then(|value| value.as_str())
+            .map(|value| value.to_string());
 
         let (participant, kind) = classify_claude_message(role, is_sidechain || depth > 0);
 
-        acc.messages.push(Message {
-            id: val
-                .get("uuid")
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_string()),
-            kind,
-            participant,
-            content: text_content,
-            timestamp: timestamp_ms,
-            parent_id: val
-                .get("parentUuid")
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_string()),
-            associated_id: val
-                .get("sourceToolAssistantUUID")
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_string()),
-            depth,
-        });
+        for (idx, thinking_content) in thinking_blocks.into_iter().enumerate() {
+            acc.messages.push(Message {
+                id: message_id.as_ref().map(|id| format!("{id}:thinking:{idx}")),
+                kind: MessageKind::Thinking,
+                participant: Participant::Assistant {
+                    provider: ProviderKind::ClaudeCode,
+                },
+                content: thinking_content,
+                timestamp: timestamp_ms,
+                parent_id: parent_id.clone(),
+                associated_id: message_id.clone().or_else(|| associated_id.clone()),
+                depth,
+            });
+        }
+
+        if let Some(text_content) = text_content {
+            if acc.fallback_preview.is_none()
+                && parse_claude_scaffold_sequence(&text_content).is_none()
+            {
+                acc.fallback_preview = first_non_empty_line(&text_content).map(str::to_string);
+            }
+            if acc.user_preview.is_none()
+                && role.eq_ignore_ascii_case("user")
+                && !(is_sidechain || depth > 0)
+                && parse_claude_scaffold_sequence(&text_content).is_none()
+            {
+                acc.user_preview = first_non_empty_line(&text_content).map(str::to_string);
+            }
+
+            acc.messages.push(Message {
+                id: message_id,
+                kind,
+                participant,
+                content: text_content,
+                timestamp: timestamp_ms,
+                parent_id,
+                associated_id,
+                depth,
+            });
+        }
     }
 
     Ok(())
@@ -435,34 +460,56 @@ pub(crate) fn clean_project_name(
     format!("~/{}", formatted_path)
 }
 
-fn extract_message_content(content: Option<&Value>) -> Option<String> {
+struct ExtractedClaudeContent {
+    text: Option<String>,
+    thinking: Vec<String>,
+}
+
+fn extract_message_content(content: Option<&Value>) -> ExtractedClaudeContent {
     let Some(content) = content else {
-        return None;
+        return ExtractedClaudeContent {
+            text: None,
+            thinking: Vec::new(),
+        };
     };
 
     let mut text_content = String::new();
+    let mut thinking_content = Vec::new();
     if let Some(text) = content.as_str() {
         text_content = text.to_string();
     } else if let Some(arr) = content.as_array() {
         for item in arr {
             if let Some(obj) = item.as_object() {
-                if obj.get("type").and_then(|value| value.as_str()) != Some("text") {
-                    continue;
-                }
-                if let Some(text) = obj.get("text").and_then(|value| value.as_str()) {
-                    if !text_content.is_empty() {
-                        text_content.push_str("\n\n");
+                match obj.get("type").and_then(|value| value.as_str()) {
+                    Some("text") => {
+                        if let Some(text) = obj.get("text").and_then(|value| value.as_str()) {
+                            if !text_content.is_empty() {
+                                text_content.push_str("\n\n");
+                            }
+                            text_content.push_str(text);
+                        }
                     }
-                    text_content.push_str(text);
+                    Some("thinking") => {
+                        if let Some(text) = obj
+                            .get("thinking")
+                            .and_then(|value| value.as_str())
+                            .or_else(|| obj.get("text").and_then(|value| value.as_str()))
+                        {
+                            let trimmed = text.trim();
+                            if !trimmed.is_empty() {
+                                thinking_content.push(trimmed.to_string());
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
     }
 
-    if text_content.is_empty() {
-        None
-    } else {
-        Some(text_content)
+    ExtractedClaudeContent {
+        text: (!text_content.is_empty()).then_some(text_content),
+        thinking: thinking_content,
     }
 }
 
@@ -522,10 +569,9 @@ mod tests {
     #[test]
     fn test_extract_message_content_from_string() {
         let content = Value::String("hello".into());
-        assert_eq!(
-            extract_message_content(Some(&content)),
-            Some("hello".into())
-        );
+        let extracted = extract_message_content(Some(&content));
+        assert_eq!(extracted.text.as_deref(), Some("hello"));
+        assert!(extracted.thinking.is_empty());
     }
 
     #[test]
@@ -535,19 +581,47 @@ mod tests {
             {"type": "tool_use", "name": "Read"},
             {"type": "text", "text": "world"}
         ]);
-        assert_eq!(
-            extract_message_content(Some(&content)),
-            Some("hello\n\nworld".into())
-        );
+        let extracted = extract_message_content(Some(&content));
+        assert_eq!(extracted.text.as_deref(), Some("hello\n\nworld"));
+        assert!(extracted.thinking.is_empty());
     }
 
     #[test]
-    fn test_extract_message_content_ignores_non_text_blocks() {
+    fn test_extract_message_content_extracts_thinking_blocks() {
         let content = serde_json::json!([
             {"type": "tool_use", "name": "Read"},
             {"type": "thinking", "text": "hidden"}
         ]);
-        assert_eq!(extract_message_content(Some(&content)), None);
+        let extracted = extract_message_content(Some(&content));
+        assert_eq!(extracted.text, None);
+        assert_eq!(extracted.thinking, vec!["hidden".to_string()]);
+    }
+
+    #[test]
+    fn parse_conversation_file_preserves_thinking_entries() {
+        let temp_dir = unique_temp_dir("claude-thinking");
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let path = temp_dir.join("conv-thinking.jsonl");
+        fs::write(
+            &path,
+            concat!(
+                "{\"timestamp\":\"2026-01-01T00:00:00Z\",\"uuid\":\"m1\",\"message\":{\"role\":\"assistant\",\"content\":[",
+                "{\"type\":\"thinking\",\"text\":\"first thought\"},",
+                "{\"type\":\"text\",\"text\":\"final answer\"}]}}\n"
+            ),
+        )
+        .unwrap();
+
+        let conversation = parse_conversation_file(&path, LoadMode::Full)
+            .unwrap()
+            .expect("conversation");
+
+        assert_eq!(conversation.messages.len(), 2);
+        assert_eq!(conversation.messages[0].kind, MessageKind::Thinking);
+        assert_eq!(conversation.messages[0].content, "first thought");
+        assert_eq!(conversation.messages[1].kind, MessageKind::AssistantMessage);
+        assert_eq!(conversation.messages[1].content, "final answer");
     }
 
     #[test]

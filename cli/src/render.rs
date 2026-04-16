@@ -46,13 +46,25 @@ fn selected_message_idx(
 fn render_message_block(
     msg: &MessagePreview,
     wrap_width: usize,
+    full_width: usize,
     theme: &Theme,
     is_selected_message: bool,
     show_focus: bool,
     tree_mode: bool,
 ) -> RenderedMessageBlock {
+    fn pad_line(mut line: Line<'static>, full_width: usize, style: Style) -> Line<'static> {
+        let width = line.width();
+        if width < full_width {
+            line.spans
+                .push(Span::styled(" ".repeat(full_width - width), style));
+        }
+        line
+    }
+
     let item_style = if is_selected_message {
-        Style::default().bg(theme.selected_bg)
+        Style::default()
+            .bg(theme.selected_bg)
+            .add_modifier(Modifier::BOLD)
     } else {
         Style::default()
     };
@@ -89,10 +101,7 @@ fn render_message_block(
     let mut header_spans = vec![
         Span::styled(focus_prefix.to_string(), focus_style),
         Span::raw(indent.clone()),
-        Span::styled(
-            prefix.to_string(),
-            Style::default().fg(color).add_modifier(Modifier::BOLD),
-        ),
+        Span::styled(prefix.to_string(), Style::default().fg(color)),
     ];
 
     if let Some(time) = &msg.relative_time {
@@ -102,65 +111,98 @@ fn render_message_block(
         ));
     }
 
-    lines.push(Line::from(header_spans).style(item_style));
-    lines.push(
+    lines.push(pad_line(
+        Line::from(header_spans).style(item_style),
+        full_width,
+        item_style,
+    ));
+    lines.push(pad_line(
         Line::from(vec![Span::styled(focus_prefix.to_string(), focus_style)]).style(item_style),
-    );
+        full_width,
+        item_style,
+    ));
+
+    if msg.kind == MessageKind::Thinking && !msg.is_expanded {
+        lines.push(pad_line(
+            Line::from(vec![
+                Span::styled(focus_prefix.to_string(), focus_style),
+                Span::raw(indent.clone()),
+                Span::styled(
+                    "Thinking trace hidden by default. Press e to expand.".to_string(),
+                    Style::default().fg(theme.dim),
+                ),
+            ])
+            .style(item_style),
+            full_width,
+            item_style,
+        ));
+        return RenderedMessageBlock { lines };
+    }
 
     let wrapped_lines = textwrap::wrap(&msg.content, wrap_width);
     let total_lines = wrapped_lines.len();
 
     if total_lines <= 12 || msg.is_expanded {
         for line in wrapped_lines {
-            lines.push(
+            lines.push(pad_line(
                 Line::from(vec![
                     Span::styled(focus_prefix.to_string(), focus_style),
                     Span::raw(indent.clone()),
                     Span::raw(line.to_string()),
                 ])
                 .style(item_style),
-            );
+                full_width,
+                item_style,
+            ));
         }
     } else {
         for line in &wrapped_lines[0..6] {
-            lines.push(
+            lines.push(pad_line(
                 Line::from(vec![
                     Span::styled(focus_prefix.to_string(), focus_style),
                     Span::raw(indent.clone()),
                     Span::raw(line.to_string()),
                 ])
                 .style(item_style),
-            );
+                full_width,
+                item_style,
+            ));
         }
 
         let hidden = total_lines - 11;
-        lines.push(
+        lines.push(pad_line(
             Line::from(vec![
                 Span::styled(focus_prefix.to_string(), focus_style),
                 Span::raw(indent.clone()),
                 Span::styled(
                     format!("... ({} more lines)", hidden),
-                    Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
+                    Style::default().fg(theme.dim),
                 ),
             ])
             .style(item_style),
-        );
+            full_width,
+            item_style,
+        ));
 
         for line in &wrapped_lines[total_lines - 5..] {
-            lines.push(
+            lines.push(pad_line(
                 Line::from(vec![
                     Span::styled(focus_prefix.to_string(), focus_style),
                     Span::raw(indent.clone()),
                     Span::raw(line.to_string()),
                 ])
                 .style(item_style),
-            );
+                full_width,
+                item_style,
+            ));
         }
     }
 
-    lines.push(
+    lines.push(pad_line(
         Line::from(vec![Span::styled(focus_prefix.to_string(), focus_style)]).style(item_style),
-    );
+        full_width,
+        item_style,
+    ));
     RenderedMessageBlock { lines }
 }
 
@@ -182,9 +224,11 @@ fn visible_message_blocks(
 
     let mut start = selected_idx;
     let mut end = selected_idx + 1;
+    let full_width = area.width as usize;
     let selected_block = render_message_block(
         &messages[selected_idx],
         wrap_width,
+        full_width,
         theme,
         selected_item_index == Some(messages[selected_idx].source_index),
         show_focus,
@@ -201,6 +245,7 @@ fn visible_message_blocks(
             let block = render_message_block(
                 &messages[prev_idx],
                 wrap_width,
+                full_width,
                 theme,
                 selected_item_index == Some(messages[prev_idx].source_index),
                 show_focus,
@@ -220,6 +265,7 @@ fn visible_message_blocks(
             let block = render_message_block(
                 &messages[next_idx],
                 wrap_width,
+                full_width,
                 theme,
                 selected_item_index == Some(messages[next_idx].source_index),
                 show_focus,
@@ -323,7 +369,9 @@ fn render_tree_list(
 
     let items = rows
         .iter()
-        .map(|row| {
+        .enumerate()
+        .map(|(idx, row)| {
+            let is_selected = idx == selected_index;
             let marker = if row.is_expandable {
                 if row.is_expanded {
                     "▾ "
@@ -334,7 +382,16 @@ fn render_tree_list(
                 "  "
             };
             let indent = "  ".repeat(row.depth);
-            let mut spans = vec![Span::raw(format!("{indent}{marker}"))];
+            let selection_guide = if is_selected { "▎ " } else { "  " };
+            let selection_style = if is_selected {
+                Style::default().fg(theme.assistant_msg)
+            } else {
+                Style::default()
+            };
+            let mut spans = vec![
+                Span::styled(selection_guide, selection_style),
+                Span::raw(format!("{indent}{marker}")),
+            ];
             let kind_prefix = match row.kind {
                 TreeRowKind::Conversation => "",
                 TreeRowKind::BranchConversation => "⎇ ",
@@ -346,16 +403,10 @@ fn render_tree_list(
                 TreeRowKind::Summary => "… ",
             };
             let row_style = match row.kind {
-                TreeRowKind::Conversation => Style::default().add_modifier(if row.depth == 0 {
-                    Modifier::BOLD
-                } else {
-                    Modifier::empty()
-                }),
+                TreeRowKind::Conversation => Style::default(),
                 TreeRowKind::BranchConversation => Style::default().fg(theme.assistant_msg),
-                TreeRowKind::BranchAnchor => Style::default()
-                    .fg(theme.assistant_msg)
-                    .add_modifier(Modifier::BOLD),
-                TreeRowKind::OpeningPrompt => Style::default().add_modifier(Modifier::BOLD),
+                TreeRowKind::BranchAnchor => Style::default().fg(theme.assistant_msg),
+                TreeRowKind::OpeningPrompt => Style::default(),
                 TreeRowKind::Entry => Style::default(),
                 TreeRowKind::Delegation => Style::default().fg(theme.dim),
                 TreeRowKind::DelegationSummary => Style::default().fg(theme.dim),
@@ -380,7 +431,15 @@ fn render_tree_list(
                 )])),
             ];
 
-            Row::new(cells)
+            let row_style = if is_selected {
+                Style::default()
+                    .bg(theme.selected_bg)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default()
+            };
+
+            Row::new(cells).style(row_style)
         })
         .collect::<Vec<_>>();
 
@@ -391,21 +450,35 @@ fn render_tree_list(
     ])
     .style(Style::default().add_modifier(Modifier::BOLD));
 
-    let table = Table::new(
-        items,
-        [
-            Constraint::Min(10),
-            Constraint::Length(meta_width as u16),
-            Constraint::Length(time_width as u16),
-        ],
-    )
-    .header(header)
-    .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-    .column_spacing(1);
+    let widths = [
+        Constraint::Min(10),
+        Constraint::Length(meta_width as u16),
+        Constraint::Length(time_width as u16),
+    ];
+
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    let header_table = Table::new(vec![header], widths)
+        .column_spacing(1)
+        .block(Block::default());
+    f.render_widget(header_table, layout[0]);
+
+    let separator =
+        Paragraph::new("─".repeat(area.width as usize)).style(Style::default().fg(theme.border));
+    f.render_widget(separator, layout[1]);
+
+    let table = Table::new(items, widths).column_spacing(1);
 
     let mut state = TableState::default();
     state.select(Some(selected_index));
-    f.render_stateful_widget(table, area, &mut state);
+    f.render_stateful_widget(table, layout[2], &mut state);
 }
 
 pub fn render_ui(
@@ -422,8 +495,8 @@ pub fn render_ui(
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1),
             Constraint::Min(0),
+            Constraint::Length(2),
             Constraint::Length(1),
         ])
         .split(area);
@@ -435,21 +508,7 @@ pub fn render_ui(
             Constraint::Min(0),
             Constraint::Length(2),
         ])
-        .split(chunks[1]);
-
-    let header_spans = vec![
-        Span::raw("   "),
-        Span::styled(
-            view_model.breadcrumb.clone(),
-            Style::default().add_modifier(Modifier::BOLD),
-        ),
-    ];
-    let header = Paragraph::new(Line::from(header_spans)).block(
-        Block::default()
-            .borders(Borders::BOTTOM)
-            .border_style(Style::default().fg(theme.border)),
-    );
-    f.render_widget(header, chunks[0]);
+        .split(chunks[0]);
 
     match &view_model.content {
         ViewContent::Table { headers, rows } => {
@@ -458,8 +517,7 @@ pub fn render_ui(
                 .map(|h| Cell::from(h.as_str()).style(Style::default().fg(theme.dim)));
             let header_row = Row::new(header_cells)
                 .style(Style::default().add_modifier(Modifier::BOLD))
-                .height(1)
-                .bottom_margin(1);
+                .height(1);
 
             let items: Vec<Row> = rows
                 .iter()
@@ -467,12 +525,29 @@ pub fn render_ui(
                 .map(|(idx, row_data)| {
                     let is_selected = Some(idx) == table_state.selected();
                     let style = if is_selected {
-                        Style::default().add_modifier(Modifier::REVERSED)
+                        Style::default()
+                            .bg(theme.selected_bg)
+                            .add_modifier(Modifier::BOLD)
                     } else {
                         Style::default()
                     };
 
-                    let cells = row_data.iter().map(|s| Cell::from(format!(" {} ", s)));
+                    let selection_guide = if is_selected { "▎ " } else { "  " };
+                    let selection_style = if is_selected {
+                        Style::default().fg(theme.assistant_msg)
+                    } else {
+                        Style::default()
+                    };
+                    let cells = row_data.iter().enumerate().map(|(cell_idx, s)| {
+                        if cell_idx == 0 {
+                            Cell::from(Line::from(vec![
+                                Span::styled(selection_guide, selection_style),
+                                Span::raw(format!("{s} ")),
+                            ]))
+                        } else {
+                            Cell::from(format!(" {} ", s))
+                        }
+                    });
                     Row::new(cells).style(style)
                 })
                 .collect();
@@ -492,11 +567,24 @@ pub fn render_ui(
                 ]
             };
 
-            let table = Table::new(items, widths)
-                .header(header_row)
-                .block(Block::default());
+            let layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Length(1),
+                    Constraint::Length(1),
+                    Constraint::Min(0),
+                ])
+                .split(padded_content[1]);
 
-            f.render_stateful_widget(table, padded_content[1], table_state);
+            let header_table = Table::new(vec![header_row], widths.clone()).block(Block::default());
+            f.render_widget(header_table, layout[0]);
+
+            let separator = Paragraph::new("─".repeat(padded_content[1].width as usize))
+                .style(Style::default().fg(theme.border));
+            f.render_widget(separator, layout[1]);
+
+            let table = Table::new(items, widths).block(Block::default());
+            f.render_stateful_widget(table, layout[2], table_state);
         }
         ViewContent::Split {
             conversations,
@@ -523,18 +611,14 @@ pub fn render_ui(
                 let is_selected = c.is_selected;
 
                 let header_style = if is_selected {
-                    Style::default().add_modifier(Modifier::REVERSED)
+                    Style::default()
+                        .bg(theme.selected_bg)
+                        .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default()
                 };
 
-                let bold_style = if is_selected {
-                    Style::default()
-                        .add_modifier(Modifier::REVERSED)
-                        .add_modifier(Modifier::BOLD)
-                } else {
-                    Style::default().add_modifier(Modifier::BOLD)
-                };
+                let title_style = header_style;
 
                 let provider_color = if c.provider_label.to_lowercase().contains("claude") {
                     theme.assistant_msg
@@ -543,14 +627,14 @@ pub fn render_ui(
                 };
 
                 let dim_style = if is_selected {
-                    Style::default().add_modifier(Modifier::REVERSED)
+                    Style::default().bg(theme.selected_bg)
                 } else {
                     Style::default().fg(theme.dim)
                 };
 
                 let provider_style = if is_selected {
                     Style::default()
-                        .add_modifier(Modifier::REVERSED)
+                        .bg(theme.selected_bg)
                         .fg(provider_color)
                         .add_modifier(Modifier::BOLD)
                 } else {
@@ -559,7 +643,7 @@ pub fn render_ui(
 
                 let header_line = Line::from(vec![
                     Span::styled(" ", dim_style),
-                    Span::styled(format!("{} ", c.title), bold_style),
+                    Span::styled(format!("{} ", c.title), title_style),
                     Span::styled(" ● ", provider_style),
                     Span::styled(format!("{} ", c.provider_label), dim_style),
                     Span::styled(format!(" {} ", c.relative_time), dim_style),
@@ -622,13 +706,20 @@ pub fn render_ui(
                 .collect();
 
             let list = List::new(items)
-                .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+                .highlight_style(
+                    Style::default()
+                        .bg(theme.selected_bg)
+                        .add_modifier(Modifier::BOLD),
+                )
                 .highlight_symbol("┃ ");
             f.render_stateful_widget(list, padded_content[1], list_state);
         }
     }
 
     let bindings_text = match &view_model.content {
+        ViewContent::Table { .. } => {
+            " [↑/k ↓/j] Navigate  [Enter/l] Open  [C] Screen Ref  [q] Quit "
+        }
         ViewContent::TreeList(_) => {
             " [↑/k ↓/j] Navigate  [e/l] Expand  [Enter] Read  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
         }
@@ -642,6 +733,17 @@ pub fn render_ui(
             " [↑/k ↓/j] Navigate  [e] Expand  [Enter/l] Select  [C] Screen Ref  [Y/y] Copy  [Esc/h] Back  [q] Quit "
         }
     };
+
+    let breadcrumb_spans = vec![
+        Span::raw("   "),
+        Span::styled(view_model.breadcrumb.clone(), Style::default()),
+    ];
+    let breadcrumb = Paragraph::new(Line::from(breadcrumb_spans)).block(
+        Block::default()
+            .borders(Borders::TOP)
+            .border_style(Style::default().fg(theme.border)),
+    );
+    f.render_widget(breadcrumb, chunks[1]);
 
     let footer_spans = vec![
         Span::styled(
@@ -832,6 +934,48 @@ mod tests {
     }
 
     #[test]
+    fn thinking_messages_render_collapsed_by_default() {
+        let backend = TestBackend::new(80, 14);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let view_model = ViewModel {
+            title: "Messages".into(),
+            breadcrumb: "Workspaces > test > conv".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::MessagesList(vec![MessagePreview {
+                source_index: 0,
+                kind: MessageKind::Thinking,
+                participant_label: "Codex".into(),
+                content: "private chain of thought".into(),
+                depth: 0,
+                is_focused: true,
+                is_expanded: false,
+                relative_time: Some("now".into()),
+            }]),
+            selected_index: 0,
+            filter_text: "Filter: All".into(),
+            status_text: None,
+        };
+
+        let theme = Theme::default();
+        let mut list_state = ListState::default();
+        let mut table_state = TableState::default();
+
+        terminal
+            .draw(|f| {
+                render_ui(f, &view_model, &mut list_state, &mut table_state, &theme);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let buffer_str = test_utils::buffer_to_string(buffer);
+
+        assert!(buffer_str.contains("Thinking"));
+        assert!(buffer_str.contains("hidden by default"));
+        assert!(!buffer_str.contains("private chain of thought"));
+    }
+
+    #[test]
     fn tree_list_renders_aligned_columns_with_header() {
         let backend = TestBackend::new(90, 10);
         let mut terminal = Terminal::new(backend).unwrap();
@@ -900,8 +1044,62 @@ mod tests {
     }
 
     #[test]
+    fn selected_transcript_row_background_extends_to_full_width() {
+        let backend = TestBackend::new(60, 12);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        let view_model = ViewModel {
+            title: "Messages".into(),
+            breadcrumb: "Workspaces > test > conv".into(),
+            active_id: Some("conv-1".into()),
+            content: ViewContent::MessagesList(vec![
+                MessagePreview {
+                    source_index: 0,
+                    kind: MessageKind::UserMessage,
+                    participant_label: "You".into(),
+                    content: "short selected line".into(),
+                    depth: 0,
+                    is_focused: false,
+                    is_expanded: false,
+                    relative_time: Some("now".into()),
+                },
+                MessagePreview {
+                    source_index: 1,
+                    kind: MessageKind::AssistantMessage,
+                    participant_label: "Claude Code".into(),
+                    content: "other line".into(),
+                    depth: 0,
+                    is_focused: false,
+                    is_expanded: false,
+                    relative_time: Some("now".into()),
+                },
+            ]),
+            selected_index: 0,
+            filter_text: "Filter: All".into(),
+            status_text: None,
+        };
+
+        let theme = Theme::default();
+        let mut list_state = ListState::default();
+        let mut table_state = TableState::default();
+
+        terminal
+            .draw(|f| {
+                render_ui(f, &view_model, &mut list_state, &mut table_state, &theme);
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let selected_line_y = 3u16;
+        let far_right_x = 57u16;
+        let cell = buffer.get(far_right_x, selected_line_y);
+
+        assert_eq!(cell.bg, theme.selected_bg);
+    }
+
+    #[test]
     fn render_footer_shows_status_text() {
-        let backend = TestBackend::new(100, 10);
+        let backend = TestBackend::new(160, 10);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let view_model = ViewModel {

@@ -718,6 +718,25 @@ impl TranscriptBrowser {
             .position(|row| self.browser_row_id(*row) == row_id)
     }
 
+    fn browser_parent_row_index(
+        &self,
+        model: &Model,
+        workspace_idx: usize,
+        expanded_ids: &[String],
+        selected_row: usize,
+    ) -> Option<usize> {
+        let rows = self.browser_rows(model, workspace_idx, expanded_ids);
+        let selected_row = clamp_selection(selected_row, rows.len());
+        let selected = rows.get(selected_row)?;
+        if selected.depth == 0 {
+            return None;
+        }
+
+        (0..selected_row)
+            .rev()
+            .find(|idx| rows[*idx].depth < selected.depth)
+    }
+
     fn visible_message_index_by_id(&self, messages: &[Message], message_id: &str) -> Option<usize> {
         messages.iter().enumerate().find_map(|(idx, message)| {
             (!is_noise_message(message) && message.id.as_deref() == Some(message_id)).then_some(idx)
@@ -832,9 +851,11 @@ pub fn visible_conversation_target(model: &Model) -> Option<(usize, usize)> {
             expanded_ids,
         } => app
             .selected_browser_row(model, *workspace_idx, *selected_row, expanded_ids)
-            .map(|row| match row.node {
-                BrowserNode::Conversation { conv_idx, .. } => (*workspace_idx, conv_idx),
-                BrowserNode::Entry { conv_idx, .. } => (*workspace_idx, conv_idx),
+            .and_then(|row| match row.node {
+                BrowserNode::Conversation { conv_idx, .. } if row.is_expanded => {
+                    Some((*workspace_idx, conv_idx))
+                }
+                _ => None,
             }),
         Screen::Messages {
             workspace_idx,
@@ -1051,10 +1072,49 @@ impl App for TranscriptBrowser {
                 let screen = model.screen.clone();
                 match screen {
                     Screen::Workspaces { .. } => {}
-                    Screen::Conversations { workspace_idx, .. } => {
-                        model.screen = Screen::Workspaces {
-                            selected_workspace: workspace_idx,
-                        };
+                    Screen::Conversations {
+                        workspace_idx,
+                        selected_row,
+                        mut expanded_ids,
+                    } => {
+                        if let Some(selected) = self.selected_browser_row(
+                            model,
+                            workspace_idx,
+                            selected_row,
+                            &expanded_ids,
+                        ) {
+                            let selected_id = self.browser_row_id(selected);
+                            expanded_ids.retain(|id| id != &selected_id);
+                        }
+
+                        if let Some(parent_row) = self.browser_parent_row_index(
+                            model,
+                            workspace_idx,
+                            &expanded_ids,
+                            selected_row,
+                        ) {
+                            if let Some(parent) = self.selected_browser_row(
+                                model,
+                                workspace_idx,
+                                parent_row,
+                                &expanded_ids,
+                            ) {
+                                if parent.is_expandable && parent.is_expanded {
+                                    let parent_id = self.browser_row_id(parent);
+                                    expanded_ids.retain(|id| id != &parent_id);
+                                }
+                            }
+
+                            model.screen = Screen::Conversations {
+                                workspace_idx,
+                                selected_row: parent_row,
+                                expanded_ids,
+                            };
+                        } else {
+                            model.screen = Screen::Workspaces {
+                                selected_workspace: workspace_idx,
+                            };
+                        }
                     }
                     Screen::Messages {
                         workspace_idx,
@@ -2027,6 +2087,67 @@ mod tests {
                 },
                 return_selected_row: 0,
                 return_expanded_ids: Vec::new(),
+            }
+        );
+    }
+
+    #[test]
+    fn visible_conversation_target_ignores_collapsed_browser_rows() {
+        let model = Model {
+            workspaces: vec![branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: Vec::new(),
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(visible_conversation_target(&model), None);
+    }
+
+    #[test]
+    fn visible_conversation_target_uses_expanded_browser_conversation() {
+        let model = Model {
+            workspaces: vec![branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 0,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(visible_conversation_target(&model), Some((0, 0)));
+    }
+
+    #[test]
+    fn back_on_nested_branch_row_collapses_to_parent_instead_of_leaving_browser() {
+        let app = AppTester::<TranscriptBrowser>::default();
+        let mut model = Model {
+            workspaces: vec![branch_workspace()],
+            current_time: 2000,
+            screen: Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 2,
+                expanded_ids: vec![
+                    browser_conversation_row_id("parent"),
+                    browser_conversation_row_id("child"),
+                ],
+            },
+            ..Default::default()
+        };
+
+        let _ = app.update(Event::Back, &mut model);
+
+        assert_eq!(
+            model.screen,
+            Screen::Conversations {
+                workspace_idx: 0,
+                selected_row: 1,
+                expanded_ids: vec![browser_conversation_row_id("parent")],
             }
         );
     }

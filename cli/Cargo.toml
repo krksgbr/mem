@@ -3,12 +3,20 @@ name = "cli"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "mem"
+path = "src/main.rs"
+
+[features]
+trial-tracing = []
+
 [dependencies]
 shared = { path = "../shared" }
 ratatui = "0.26.1"
 crossterm = "0.27.0"
 serde = { version = "1.0", features = ["derive"] }
 anyhow = "1.0"
+clap = { version = "4.5.39", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
 crux_core = "0.16.2"
 serde_json = "1.0.149"
